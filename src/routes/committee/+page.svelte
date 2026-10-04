@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { MapPin, Phone, LogIn } from '@lucide/svelte';
+  import { MapPin, Phone, MessageCircle, LogIn } from '@lucide/svelte';
   import PageHeading from '$lib/components/PageHeading.svelte';
   import EmptyState from '$lib/components/EmptyState.svelte';
   import ErrorState from '$lib/components/ErrorState.svelte';
@@ -9,6 +9,7 @@
   import { committeeForYear } from '$lib/api/derive';
   import { initials, avatarGradient } from '$lib/utils/format';
   import { mgmtLoginUrl } from '$lib/api/client';
+  import { telHref, whatsappUrl } from '$lib/contact';
 
   let loading = $derived($portalState.status === 'loading');
   let members = $derived(committeeForYear($portalState.data, $year));
@@ -59,12 +60,36 @@
               <span class="inline-flex items-center gap-1"><MapPin class="h-3 w-3" aria-hidden="true" />{villageOf(m)}</span>
             {/if}
             {#if m.mobile}
-              <a href="tel:{m.mobile}" class="inline-flex items-center gap-1 hover:text-brand-700">
+              <a href={telHref(m.mobile)} class="inline-flex items-center gap-1 hover:text-brand-700">
                 <Phone class="h-3 w-3" aria-hidden="true" />{m.mobile}
               </a>
             {/if}
           </div>
         </div>
+        {#if m.mobile}
+          <!-- Two 40px tap targets: call and WhatsApp. Hidden when the committee has not
+               published a number for this member. -->
+          <div class="flex flex-none items-center gap-2">
+            <a
+              href={telHref(m.mobile)}
+              aria-label={$tr('call_member', { name: nameOf(m) })}
+              class="grid h-10 w-10 place-items-center rounded-full bg-brand-50 text-brand-700 hover:bg-brand-100"
+            >
+              <Phone class="h-[18px] w-[18px]" aria-hidden="true" />
+            </a>
+            {#if whatsappUrl(m.mobile)}
+              <a
+                href={whatsappUrl(m.mobile)}
+                target="_blank"
+                rel="noopener"
+                aria-label={$tr('whatsapp_member', { name: nameOf(m) })}
+                class="grid h-10 w-10 place-items-center rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+              >
+                <MessageCircle class="h-[18px] w-[18px]" aria-hidden="true" />
+              </a>
+            {/if}
+          </div>
+        {/if}
       </li>
     {/each}
   </ul>

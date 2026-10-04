@@ -143,7 +143,7 @@ export const T: Record<Lang, Dict> = {
       'Data is fetched from the committee\u2019s public API. Your browser may cache the last-loaded copy locally so the portal remains usable offline; this cache stays on your device and is never shared.',
     privacy_published_h: 'Personal details that are published',
     privacy_published_p:
-      'Contribution and committee entries can include a person\'s name, village, father\'s name and photo, and, for committee members, a mobile number. Loan records show the borrower and guarantors. The committee publishes these only for community transparency. If you do not want a detail about you shown, tell the committee and it will be removed or hidden.',
+      'Contribution and committee entries can include a person\'s name, village, father\'s name and photo, and, for committee members, a mobile number. Loan records show the borrower and guarantors. The committee publishes these only for community transparency. If you do not want a detail about you shown, or one is wrong, email the committee at {email} and it will be corrected, removed or hidden.',
     privacy_cookies_h: 'Analytics and cookies',
     privacy_cookies_p:
       'Analytics are off by default. Only if you press Accept does the portal load Google Tag Manager, which runs Google Analytics (visit counts) and Microsoft Clarity (how pages are used, such as taps and scrolling). They set cookies such as _ga and _clck and receive your IP address. If you decline, none of them load, and you can change your choice any time with Cookie settings in the footer. Nothing else on this portal uses cookies.',
@@ -161,9 +161,9 @@ export const T: Record<Lang, Dict> = {
       'The published records — contributions, expenses, loans, committee lists — are kept as the committee’s permanent accounts, because that is the point of publishing them. Anything technical is short-lived: error reports are pruned automatically, and a notification address is dropped as soon as it stops working or you turn notifications off. If you accept analytics, the data Google and Microsoft collect is kept under their own policies.',
     privacy_rights_h: 'Corrections and removal',
     privacy_rights_p:
-      'If something published about you is wrong, or you want it removed, contact the committee and they will correct the record. Everything on this portal comes from the committee’s ledger, so a correction there is what changes what you see here.',
+      'If something published about you is wrong, or you want it removed, email the committee at {email} and they will correct the record. Everything on this portal comes from the committee’s ledger, so a correction there is what changes what you see here.',
     privacy_contact_p:
-      'For corrections or questions about your record, please contact the committee directly.',
+      'For corrections, removal or questions about your record, please email the committee at {email}.',
     terms_subtitle: 'Terms of Use',
     terms_intro:
       "This site is provided by {org_name} for community transparency. The information is presented in good faith and is derived from the committee's records.",
@@ -181,7 +181,9 @@ export const T: Record<Lang, Dict> = {
     consent_accept: 'Accept',
     consent_decline: 'Decline',
     consent_details: 'Details',
-    privacy_whatsapp: 'WhatsApp the committee',
+    privacy_email: 'Email the committee',
+    call_member: 'Call {name}',
+    whatsapp_member: 'WhatsApp {name}',
     privacy_cookie_change: 'Change cookie choice',
     privacy_see_terms: 'Read the Terms of Use',
     terms_see_privacy: 'Read the Privacy Policy',
@@ -637,7 +639,7 @@ export const T: Record<Lang, Dict> = {
       'डेटा समिति के सार्वजनिक API से लिया जाता है। आपका browser अंतिम बार लोड की गई प्रति को स्थानीय रूप से cache कर सकता है ताकि पोर्टल offline भी उपयोग योग्य रहे; यह cache आपके device पर ही रहता है और कभी साझा नहीं किया जाता।',
     privacy_published_h: 'जो निजी जानकारी प्रकाशित होती है',
     privacy_published_p:
-      'योगदान और समिति की प्रविष्टियों में व्यक्ति का नाम, गाँव, पिता का नाम और फ़ोटो हो सकता है, और समिति सदस्यों के लिए मोबाइल नंबर भी। ऋण records में उधार लेने वाले और गारंटरों के नाम दिखते हैं। समिति इन्हें केवल सामुदायिक पारदर्शिता के लिए प्रकाशित करती है। अगर आप नहीं चाहते कि आपकी कोई जानकारी दिखे, तो समिति को बताइए — उसे हटा या छिपा दिया जाएगा।',
+      'योगदान और समिति की प्रविष्टियों में व्यक्ति का नाम, गाँव, पिता का नाम और फ़ोटो हो सकता है, और समिति सदस्यों के लिए मोबाइल नंबर भी। ऋण records में उधार लेने वाले और गारंटरों के नाम दिखते हैं। समिति इन्हें केवल सामुदायिक पारदर्शिता के लिए प्रकाशित करती है। अगर आप नहीं चाहते कि आपकी कोई जानकारी दिखे, या कोई जानकारी ग़लत है, तो समिति को {email} पर ईमेल कीजिए — उसे सुधार, हटा या छिपा दिया जाएगा।',
     privacy_cookies_h: 'Analytics और cookies',
     privacy_cookies_p:
       'Analytics डिफ़ॉल्ट रूप से बंद रहते हैं। केवल जब आप “स्वीकार करें” दबाते हैं, तभी पोर्टल Google Tag Manager लोड करता है, जिसके अंदर Google Analytics (visits की गिनती) और Microsoft Clarity (पेज कैसे इस्तेमाल होते हैं, जैसे tap और scroll) चलते हैं। ये _ga और _clck जैसी cookies लगाते हैं और आपका IP address पाते हैं। “मना करें” चुनने पर इनमें से कुछ भी लोड नहीं होता, और आप कभी भी footer में “Cookie सेटिंग” से अपनी पसंद बदल सकते हैं। इस पोर्टल पर और कुछ भी cookies इस्तेमाल नहीं करता।',
@@ -655,9 +657,9 @@ export const T: Record<Lang, Dict> = {
       'प्रकाशित रिकॉर्ड — चंदा, ख़र्च, ऋण, समिति की सूची — समिति के स्थायी हिसाब के रूप में रखे जाते हैं, क्योंकि उन्हें प्रकाशित करने का मक़सद ही यही है। तकनीकी चीज़ें कम समय की हैं: ग़लती की रिपोर्टें अपने आप हटती रहती हैं, और सूचना का पता तभी तक रहता है जब तक वह काम करता है या आप सूचनाएँ बंद नहीं करते। अगर आप analytics स्वीकार करते हैं, तो Google और Microsoft जो डेटा इकट्ठा करते हैं वह उनकी अपनी नीतियों के अनुसार रखा जाता है।',
     privacy_rights_h: 'सुधार और हटाना',
     privacy_rights_p:
-      'अगर आपके बारे में प्रकाशित कोई बात ग़लत है, या आप उसे हटाना चाहते हैं, तो समिति से संपर्क करें और वे रिकॉर्ड सुधार देंगे। इस पोर्टल पर सब कुछ समिति के रजिस्टर से आता है, इसलिए वहाँ सुधार होने पर ही यहाँ बदलता है।',
+      'अगर आपके बारे में प्रकाशित कोई बात ग़लत है, या आप उसे हटाना चाहते हैं, तो समिति को {email} पर ईमेल करें और वे रिकॉर्ड सुधार देंगे। इस पोर्टल पर सब कुछ समिति के रजिस्टर से आता है, इसलिए वहाँ सुधार होने पर ही यहाँ बदलता है।',
     privacy_contact_p:
-      'अपने record में सुधार या किसी प्रश्न के लिए कृपया सीधे समिति से संपर्क करें।',
+      'अपने record में सुधार, हटवाने या किसी प्रश्न के लिए कृपया समिति को {email} पर ईमेल करें।',
     terms_subtitle: 'उपयोग की शर्तें',
     terms_intro:
       'यह साइट {org_name} द्वारा सामुदायिक पारदर्शिता के लिए उपलब्ध कराई गई है। जानकारी सद्भावना के साथ प्रस्तुत की गई है और समिति के records से ली गई है।',
@@ -675,7 +677,9 @@ export const T: Record<Lang, Dict> = {
     consent_accept: 'स्वीकार करें',
     consent_decline: 'मना करें',
     consent_details: 'विवरण',
-    privacy_whatsapp: 'समिति को WhatsApp करें',
+    privacy_email: 'समिति को ईमेल करें',
+    call_member: '{name} को कॉल करें',
+    whatsapp_member: '{name} को WhatsApp करें',
     privacy_cookie_change: 'Cookie पसंद बदलें',
     privacy_see_terms: 'उपयोग की शर्तें पढ़ें',
     terms_see_privacy: 'गोपनीयता नीति पढ़ें',
