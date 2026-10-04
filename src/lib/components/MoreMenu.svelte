@@ -1,0 +1,240 @@
+<script lang="ts">
+  /**
+   * The mobile "More" bottom-nav tab: a button that opens a full bottom-sheet
+   * modal (slide-up from the bottom, dimmed overlay) listing the NAV_MORE items
+   * (Downloads, Committee, Donate) as clean full-width rows. The sheet has its
+   * own header ("More" + close X). Tapping the overlay, the X, an item, Escape,
+   * or a route change all close it. Shown only on mobile — desktop navs list
+   * every item inline. Each skin passes its active/idle trigger classes so the
+   * tab matches the surrounding bar.
+   *
+   * IMPORTANT — the overlay is teleported to <body> via the `portal` action.
+   * Each skin's <nav> is `position: fixed` and uses `backdrop-blur`; a nested
+   * `position: fixed` child is contained by that blurred ancestor (backdrop-
+   * filter creates a containing block), so without the portal the "fixed" modal
+   * would be clipped to the nav bar and appear inline. Rendered on <body> it
+   * covers the whole viewport. The SURFACE colour comes from the active theme
+   * tokens (--surface-bg over --page-to) and the icons/active row use --accent,
+   * so the sheet matches whatever theme is applied. Text / close / dividers use
+   * Tailwind slate + `dark:` pairs (NOT --surface-border, which is a border/
+   * hairline token that is white or an accent colour in several themes and left
+   * the labels unreadable on light surfaces) — the sheet carries data-theme +
+   * the `dark` class so those variants flip correctly.
+   */
+  import { page } from '$app/stores';
+  import { dialog } from '$lib/a11y/dialog'; // audit PR-36
+  import { tr } from '$lib/stores/lang';
+  import { NAV_MORE, NAV_MORE_PATHS } from './nav';
+  import { MoreHorizontal, X, ChevronRight, Bell } from '@lucide/svelte';
+  import { fade, fly } from 'svelte/transition';
+  import InstallButton from './InstallButton.svelte';
+  import NotificationsView from './NotificationsView.svelte';
+  import { unreadCount } from '$lib/stores/notifications';
+
+  // Teleport a node to document.body so it escapes the nav's fixed/blur
+  // containing block and truly overlays the viewport.
+  function portal(node: HTMLElement) {
+    document.body.appendChild(node);
+    return {
+      destroy() {
+        if (node.parentNode) node.parentNode.removeChild(node);
+      }
+    };
+  }
+
+  interface Props {
+    /** Wrapper <li>/<div> class so the trigger sizes like the other tabs. */
+    itemClass?: string;
+    /** Trigger button classes when the More section is active. */
+    activeClass?: string;
+    /** Trigger button classes when idle. */
+    idleClass?: string;
+    /** Optional extra classes on the trigger button (layout, shared with tabs). */
+    triggerClass?: string;
+    /** When true, wrap the icon in the premium-style pill badge. */
+    iconBadge?: boolean;
+  }
+  let {
+    itemClass = 'flex-1',
+    activeClass = 'text-brand-700',
+    idleClass = 'text-muted',
+    triggerClass = 'flex w-full flex-col items-center gap-0.5 py-2 text-[10px] font-semibold transition',
+    iconBadge = false
+  }: Props = $props();
+
+  let open = $state(false);
+  const isMoreActive = $derived(NAV_MORE_PATHS.some((h) => $page.url.pathname.startsWith(h)));
+
+  // Which view the sheet is showing. Both live in the SAME sheet container, so
+  // the notifications list is guaranteed to be the same size and in the same
+  // place as the menu — and the sheet's portal + theme-token copying is written
+  // once rather than duplicated for a second overlay.
+  let view = $state<'menu' | 'notifications'>('menu');
+
+  function openSheet() {
+    view = 'menu';
+    open = true;
+  }
+
+  // Close the sheet whenever the route changes.
+  let lastPath = $state($page.url.pathname);
+  $effect(() => {
+    if ($page.url.pathname !== lastPath) {
+      lastPath = $page.url.pathname;
+      open = false;
+    }
+  });
+
+  // Always reopen on the menu, never on whatever view was last used.
+  $effect(() => {
+    if (!open) view = 'menu';
+  });
+
+  // Lock background scroll while the sheet is open.
+  $effect(() => {
+    if (typeof document === 'undefined') return;
+    if (open) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  });
+
+  const isItemActive = (href: string) => $page.url.pathname.startsWith(href);
+
+</script>
+
+<div class="relative {itemClass}">
+  <button
+    type="button"
+    aria-haspopup="menu"
+    aria-expanded={open}
+    aria-label={$tr('nav_more')}
+    onclick={() => (open ? (open = false) : openSheet())}
+    class="{triggerClass} {open || isMoreActive ? activeClass : idleClass}"
+  >
+    {#if iconBadge}
+      <span class="grid h-9 w-12 place-items-center rounded-xl transition {open || isMoreActive ? 'bg-brand-50' : ''}">
+        <MoreHorizontal class="h-5 w-5" aria-hidden="true" />
+      </span>
+    {:else}
+      <MoreHorizontal class="h-5 w-5" aria-hidden="true" />
+    {/if}
+    {$tr('nav_more')}
+  </button>
+</div>
+
+{#if open}
+  <!-- Teleported to <body> so it escapes the nav's fixed/backdrop-blur
+       containing block and covers the whole viewport. Carries `data-theme` +
+       the `dark` class copied from <html> so the theme tokens resolve here too
+       (a portaled node lives outside the app root that holds them). -->
+  <div
+    use:portal
+    class="fixed inset-0 z-[100] lg:hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-label={$tr('nav_more')}
+    use:dialog={{ onclose: () => (open = false) }}
+  >
+    <!-- Dim backdrop -->
+    <button
+      type="button"
+      class="absolute inset-0 h-full w-full cursor-default bg-black/40"
+      aria-label="Close menu"
+      tabindex="-1"
+      onclick={() => (open = false)}
+      transition:fade={{ duration: 180 }}
+    ></button>
+
+    <!-- Bottom sheet — opaque, theme-tokened surface (page gradient base +
+         surface tint on top so it is solid on both light and dark themes). -->
+    <div
+      class="absolute inset-x-0 bottom-0 rounded-t-2xl border-t border-line bg-white text-ink shadow-2xl"
+      style="padding-bottom: env(safe-area-inset-bottom);"
+      transition:fly={{ y: 340, duration: 260 }}
+    >
+      <!-- grabber -->
+      <div class="flex justify-center pt-2.5">
+        <span class="h-1.5 w-10 rounded-full bg-black/15"></span>
+      </div>
+      <!-- header — the close X is shared by both views; the title is not, because
+           the notifications view leads with its own "Back to Menu" row. -->
+      <div class="flex items-center justify-between px-5 pb-2 pt-2.5">
+        <h2 class="text-base font-extrabold text-ink">
+          {view === 'menu' ? $tr('nav_more') : ''}
+        </h2>
+        <button
+          type="button"
+          onclick={() => (open = false)}
+          aria-label="Close"
+          class="grid h-9 w-9 place-items-center rounded-full text-muted transition hover:bg-canvas"
+        >
+          <X class="h-5 w-5" aria-hidden="true" />
+        </button>
+      </div>
+
+      {#if view === 'menu'}
+        <!-- Install app + Notifications, side by side.
+             InstallButton is the SAME component the /guide page uses (no
+             duplicated install logic); the prompt it opens is captured by
+             $lib/stores/install at app bootstrap rather than on mount, so it
+             still works even though this sheet mounts late. Both are only
+             reachable on mobile, because the whole sheet is md:hidden. -->
+        <div class="flex items-center gap-2 border-b border-line px-5 pb-3">
+          <InstallButton />
+          <button
+            type="button"
+            onclick={() => (view = 'notifications')}
+            aria-label={$tr('notif_title')}
+            title={$tr('notif_title')}
+            class="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl transition active:scale-95"
+            style="background: rgb(var(--accent) / 0.16); color: rgb(var(--accent));"
+          >
+            <Bell class="h-5 w-5" aria-hidden="true" />
+            {#if $unreadCount > 0}
+              <!-- Unread badge. The count comes from the device inbox the service
+                   worker writes on each push (see $lib/stores/notifications). -->
+              <span
+                class="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] font-extrabold text-white"
+                style="background: rgb(var(--accent));"
+              >
+                {$unreadCount > 9 ? '9+' : $unreadCount}
+              </span>
+            {/if}
+          </button>
+        </div>
+        <!-- full-width rows -->
+        <nav class="px-2 pb-3">
+          {#each NAV_MORE as item}
+            {@const Icon = item.icon}
+            {@const active = isItemActive(item.href)}
+            <a
+              href={item.href}
+              aria-current={active ? 'page' : undefined}
+              onclick={() => (open = false)}
+              class="flex items-center gap-3.5 rounded-xl px-3 py-3.5 text-[15px] font-semibold transition
+                {active ? '' : 'text-ink hover:bg-black/[0.05]'}"
+              style={active
+                ? 'color: rgb(var(--accent)); background: rgb(var(--accent) / 0.12);'
+                : ''}
+            >
+              <span
+                class="grid h-10 w-10 shrink-0 place-items-center rounded-xl"
+                style="background: rgb(var(--accent) / 0.16); color: rgb(var(--accent));"
+              >
+                <Icon class="h-5 w-5" aria-hidden="true" />
+              </span>
+              <span class="min-w-0 flex-1">{$tr(item.key)}</span>
+              <ChevronRight class="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
+            </a>
+          {/each}
+        </nav>
+      {:else}
+        <NotificationsView onback={() => (view = 'menu')} onclose={() => (open = false)} />
+      {/if}
+    </div>
+  </div>
+{/if}
