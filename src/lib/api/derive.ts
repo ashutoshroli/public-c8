@@ -543,7 +543,7 @@ export function committeeForYear(
       designationHindi: (u?.['Designation (Hindi)'] ?? '').toString(),
       village: (u?.Village ?? '').toString(),
       villageHindi: (u?.['Village (Hindi)'] ?? '').toString(),
-      mobile: (u?.Mobile ?? '').toString(),
+      mobile: rowField(u, 'Mobile'),
       year: (r.Year ?? '').toString(),
       seed: id || (r.Name ?? '').toString()
     };
