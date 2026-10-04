@@ -33,7 +33,7 @@ export default {
         warning: '#b7791f'
       },
       fontFamily: {
-        sans: ['Manrope', 'Noto Sans Devanagari', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Arial', 'sans-serif']
+        sans: ['Manrope Variable', 'Manrope', 'Noto Sans Devanagari Variable', 'Noto Sans Devanagari', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Arial', 'sans-serif']
       },
       boxShadow: {
         card: '0 1px 2px rgba(22,32,27,.04)'

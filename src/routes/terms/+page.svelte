@@ -17,5 +17,10 @@
   <p>{$tr('terms_use_p')}</p>
   <h2 class="text-base font-bold text-ink">{$tr('terms_docs_h')}</h2>
   <p>{$tr('terms_docs_p')}</p>
+  <h2 class="text-base font-bold text-ink">{$tr('terms_donations_h')}</h2>
+  <p>{$tr('terms_donations_p')}</p>
+  <p>
+    <a href="/privacy" class="font-semibold text-brand-700 underline underline-offset-2">{$tr('terms_see_privacy')}</a>
+  </p>
   <p>{$tr('terms_closing')}</p>
 </article>

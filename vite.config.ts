@@ -143,14 +143,8 @@ export default defineConfig({
           // workbox lets the request go straight to the network, exactly as it did
           // before the SW existed, so the images always load. (Trade-off: uploaded
           // images are not available offline; correctness wins.)
-          {
-            urlPattern: ({ url }) => /fonts\.(googleapis|gstatic)\.com/.test(url.host),
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'chhath-fonts',
-              expiration: { maxEntries: 16, maxAgeSeconds: 60 * 60 * 24 * 365 }
-            }
-          }
+          // Fonts are self-hosted now (static/fonts), so they are covered by the precache above;
+          // the old CacheFirst rule for fonts.googleapis.com / fonts.gstatic.com is gone.
         ]
       }
     })

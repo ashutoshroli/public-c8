@@ -116,7 +116,7 @@ export const ROUTES: RouteMeta[] = [
     path: '/privacy',
     titleKey: 'privacy_subtitle',
     description:
-      'What this portal publishes, what it stores, what it does not collect, and how long anything is kept.',
+      'What this portal publishes, what it stores, its optional analytics cookies, and how long anything is kept.',
     changefreq: 'yearly',
     priority: '0.3',
   },

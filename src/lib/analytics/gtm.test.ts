@@ -32,27 +32,20 @@ describe('FEAT-001: the GTM container is installed in app.html', () => {
       .toContain('https://www.googletagmanager.com/gtm.js');
   });
 
-  it('the noscript iframe carries the container id and points at ns.html', () => {
-    const noscript = html.match(/<noscript[\s\S]*?<\/noscript>/g) || [];
-    const gtmNoscript = noscript.find((n) => n.includes(GTM_ID)) || '';
-    expect(gtmNoscript, 'a <noscript> block must reference the container id').toContain(GTM_ID);
-    expect(gtmNoscript, 'the noscript iframe must reference googletagmanager.com/ns.html')
-      .toContain('https://www.googletagmanager.com/ns.html?id=' + GTM_ID);
+  it('the head snippet only runs after the visitor has accepted analytics cookies', () => {
+    const head = html.slice(0, html.indexOf('<body'));
+    expect(head, 'GTM must be gated on the stored consent').toContain("localStorage.getItem('cpm_analytics_consent') !== 'granted'");
+    expect(head, 'the gate must come before the script is injected')
+      .toMatch(/cpm_analytics_consent[\s\S]*gtm\.js\?id=/);
   });
 
-  it('the noscript iframe sits immediately after <body> and before the sveltekit.body div', () => {
-    const bodyOpen = html.indexOf('<body');
-    const iframe = html.indexOf('googletagmanager.com/ns.html');
-    const bodyDiv = html.indexOf('%sveltekit.body%');
-    expect(bodyOpen, 'app.html must have a body tag').toBeGreaterThanOrEqual(0);
-    expect(iframe, 'the noscript iframe must exist').toBeGreaterThan(bodyOpen);
-    expect(iframe, 'the noscript iframe must precede the sveltekit body div').toBeLessThan(bodyDiv);
+  it('there is NO GTM noscript iframe: it would load Google without consent', () => {
+    expect(html).not.toContain('googletagmanager.com/ns.html');
   });
 
-  it('the id appears in BOTH the head script and the noscript iframe', () => {
-    expect((html.match(new RegExp(GTM_ID, 'g')) || []).length,
-      'the container id must appear in both the head snippet and the noscript iframe')
-      .toBeGreaterThanOrEqual(2);
+  it('the container id lives in app.html and in the consent module, and they agree', () => {
+    expect(html).toContain(GTM_ID);
+    expect(read('lib/analytics/consent.ts')).toContain(`GTM_ID = '${GTM_ID}'`);
   });
 
   it('the existing template intactness is preserved', () => {
@@ -100,9 +93,9 @@ describe('FEAT-001: the CSP allows GTM, GA4 and Clarity', () => {
     expect(imgSrc).toContain('https://*.clarity.ms');
   });
 
-  it('a frame-src directive exists for the GTM noscript iframe', () => {
+  it('a frame-src directive still allows GTM (tags may open a frame)', () => {
     const frameSrc = directive('frame-src');
-    expect(frameSrc, 'without frame-src the GTM noscript iframe falls back to default-src and is blocked')
+    expect(frameSrc, 'without frame-src a GTM tag frame falls back to default-src and is blocked')
       .toContain('https://www.googletagmanager.com');
   });
 

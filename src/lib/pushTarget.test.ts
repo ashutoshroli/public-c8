@@ -149,7 +149,7 @@ describe('PR-44: the two copies of the resolver cannot drift', () => {
 describe('PR-44: the privacy notice covers what the portal actually does', () => {
   const i18n = readFileSync(resolve(process.cwd(), 'src/lib/i18n.ts'), 'utf8');
   const page = readFileSync(resolve(process.cwd(), 'src/routes/privacy/+page.svelte'), 'utf8');
-  const SECTIONS = ['chat', 'push', 'offline', 'thirdparty', 'retention', 'rights'];
+  const SECTIONS = ['published', 'cookies', 'push', 'offline', 'thirdparty', 'retention', 'rights'];
 
   it('every new section exists in BOTH languages', () => {
     for (const s of SECTIONS) {
@@ -166,12 +166,14 @@ describe('PR-44: the privacy notice covers what the portal actually does', () =>
     for (const s of SECTIONS) expect(page).toContain(`'${s}'`);
   });
 
-  it('it names the third party instead of implying there is none', () => {
-    // The uncomfortable one: fonts come from Google, so Google sees every visitor's IP. Saying so
-    // is the honest interim while the fonts are still remote.
+  it('it names the third parties instead of implying there are none', () => {
+    // The uncomfortable one: GA4 and Clarity run inside GTM and see the visitor's IP. Saying so is
+    // the honest version of "Nothing else on the portal is a third party".
     const en = i18n.slice(0, i18n.indexOf("privacy_subtitle: 'गोपनीयता नीति'"));
-    expect(en).toMatch(/Google Fonts/);
+    expect(en).toMatch(/Google Analytics/);
+    expect(en).toMatch(/Microsoft Clarity/);
     expect(en).toMatch(/IP address/);
+    expect(en, 'fonts are self-hosted now; the notice must not still claim Google Fonts').not.toMatch(/loaded from Google Fonts/);
   });
 
   it('it says notifications can be turned off, and what is kept on the device', () => {
@@ -181,8 +183,14 @@ describe('PR-44: the privacy notice covers what the portal actually does', () =>
     expect(en).toMatch(/Clearing site data/);
   });
 
-  it('it warns not to type anything private into the assistant', () => {
+  it('it says analytics are off by default, and how to change the choice', () => {
     const en = i18n.slice(0, i18n.indexOf("privacy_subtitle: 'गोपनीयता नीति'"));
-    expect(en).toMatch(/do not put anything private/i);
+    expect(en).toMatch(/Analytics are off by default/);
+    expect(en).toMatch(/Cookie settings/);
+  });
+
+  it('the cookies section has an anchor and a change-choice button', () => {
+    expect(page).toContain('id={section}');
+    expect(page).toContain('consentPanelOpen.set(true)');
   });
 });

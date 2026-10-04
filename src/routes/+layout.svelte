@@ -4,6 +4,7 @@
   import { initPortal } from '$lib/stores/portal';
   import Shell from '$lib/components/Shell.svelte';
   import AnnouncementPopup from '$lib/components/AnnouncementPopup.svelte';
+  import ConsentBanner from '$lib/components/ConsentBanner.svelte'; // analytics-cookie choice
   import Seo from '$lib/components/Seo.svelte'; // per-route canonical + social + JSON-LD
   import { pwaInfo } from 'virtual:pwa-info';
   import { listenForSubscriptionChange } from '$lib/push';
@@ -65,3 +66,4 @@
 </Shell>
 
 <AnnouncementPopup />
+<ConsentBanner />
