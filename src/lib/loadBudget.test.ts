@@ -62,3 +62,21 @@ describe('the service worker precache stays small', () => {
     expect(vite).toContain("url.pathname.startsWith('/fonts/')");
   });
 });
+
+describe('images and fonts do not cause layout shift or late text', () => {
+  it('avatar images declare their size and decode off the main thread', () => {
+    for (const f of ['ContributorCard', 'ContributorsListModal', 'ContributorDetail']) {
+      const src = read(`src/lib/components/${f}.svelte`);
+      const img = src.slice(src.indexOf('<img'), src.indexOf('/>', src.indexOf('<img')));
+      expect(img, `${f} <img> needs width`).toMatch(/width="\d+"/);
+      expect(img, `${f} <img> needs height`).toMatch(/height="\d+"/);
+      expect(img, `${f} <img> needs decoding`).toContain('decoding="async"');
+    }
+  });
+
+  it('the Latin webfont is preloaded from app.html', () => {
+    const html = read('src/app.html');
+    expect(html).toContain('rel="preload" href="/fonts/manrope-latin-wght-normal.woff2" as="font"');
+    expect(html, 'font preloads must be crossorigin even when same-origin').toMatch(/manrope-latin[^>]*crossorigin/);
+  });
+});

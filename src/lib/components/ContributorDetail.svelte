@@ -65,6 +65,9 @@
           <img
             src={c.photo}
             alt={displayName}
+            decoding="async"
+            width="80"
+            height="80"
             class="h-20 w-20 rounded-full object-cover"
             onerror={() => (photoFailed = true)}
           />

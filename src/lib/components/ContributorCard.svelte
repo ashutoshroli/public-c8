@@ -45,6 +45,9 @@
       src={c.photo}
       alt={displayName}
       loading="lazy"
+      decoding="async"
+      width="44"
+      height="44"
       class="h-11 w-11 rounded-full object-cover"
       onerror={() => (photoFailed = true)}
     />

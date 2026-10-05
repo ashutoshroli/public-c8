@@ -80,6 +80,9 @@
                   src={entry.item.photo}
                   alt={nameOf(entry.item)}
                   loading="lazy"
+                  decoding="async"
+                  width="40"
+                  height="40"
                   class="h-10 w-10 rounded-full object-cover"
                   onerror={() => failedPhotos.add(entry.item.key)}
                 />
