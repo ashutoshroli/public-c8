@@ -101,6 +101,15 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,webp,avif,woff2}'],
+        // Keep the first-visit background download small. None of these is needed to render or
+        // run the app offline:
+        //  - screenshots/ and the 512px icons are only read by the browser's install prompt
+        //    (online); the 192/180px icons the app itself uses stay precached.
+        //  - the Devanagari webfont (121 kB) is fetched on demand the first time Hindi is shown
+        //    and then served from the 'chhath-fonts' cache (rule below), so English-only
+        //    visitors never download it and Hindi still works offline after one use.
+        // (globs are matched under .svelte-kit/output, i.e. behind a client/ prefix, hence **/)
+        globIgnores: ['**/screenshots/**', '**/icons/icon-512*.png', '**/fonts/noto-sans-devanagari-*.woff2'],
         // Pull the push/notification event handlers into the generated service
         // worker. Kept as a separate static script (static/push-sw.js) on purpose:
         // the generated SW owns the precache manifest and the runtime-caching
@@ -143,8 +152,15 @@ export default defineConfig({
           // workbox lets the request go straight to the network, exactly as it did
           // before the SW existed, so the images always load. (Trade-off: uploaded
           // images are not available offline; correctness wins.)
-          // Fonts are self-hosted now (static/fonts), so they are covered by the precache above;
-          // the old CacheFirst rule for fonts.googleapis.com / fonts.gstatic.com is gone.
+          {
+            // Same-origin self-hosted fonts (the Devanagari one is not precached, see globIgnores).
+            urlPattern: ({ url }) => url.pathname.startsWith('/fonts/') && url.pathname.endsWith('.woff2'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'chhath-fonts',
+              expiration: { maxEntries: 4, maxAgeSeconds: 60 * 60 * 24 * 365 }
+            }
+          }
         ]
       }
     })

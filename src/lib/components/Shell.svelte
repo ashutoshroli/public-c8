@@ -47,8 +47,12 @@
     </nav>
 
     <div class="ml-auto flex flex-none items-center gap-2">
+      <!-- `font-system`: this label is the ONLY Devanagari on an English page. Drawn in the
+           device's own font, the 121 kB Noto Devanagari webfont is not downloaded until the
+           visitor actually switches to Hindi. -->
       <button
-        class="chip"
+        class="chip font-system"
+        lang={$lang === 'hi' ? 'en' : 'hi'}
         onclick={() => lang.toggle()}
         aria-label={$tr('toggle_language')}
         title={$tr('toggle_language')}
@@ -65,7 +69,7 @@
 </main>
 
 <footer class="mx-auto max-w-6xl px-4 pb-28 lg:pb-10">
-  <div class="flex flex-col items-center gap-2 border-t border-line pt-5 text-center text-xs text-muted sm:flex-row sm:justify-between sm:text-left">
+  <div class="flex flex-col gap-2 border-t border-line pt-5 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
     <p>{$tr('org_name')} · {$tr('org_location')}</p>
     <FooterLinks />
   </div>

@@ -33,6 +33,8 @@ export default {
         warning: '#b7791f'
       },
       fontFamily: {
+        // Device fonts only (no webfont): used where a webfont download is not worth it.
+        system: ['system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Noto Sans Devanagari', 'Nirmala UI', 'sans-serif'],
         sans: ['Manrope Variable', 'Manrope', 'Noto Sans Devanagari Variable', 'Noto Sans Devanagari', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Arial', 'sans-serif']
       },
       boxShadow: {
