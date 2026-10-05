@@ -59,6 +59,9 @@
       })();
     </script>
 
+    <!-- API lives on its own hostname: open DNS+TLS while the JS downloads (handshake only, no
+         request reaches the Worker). Keep in sync with PUBLIC_API_BASE default in src/lib/config.ts. -->
+    <link rel="preconnect" href="https://chhath-public-worker.shaharpura.com" crossorigin />
     <link rel="preload" href="/fonts/manrope-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
     <!-- Fonts are self-hosted (@font-face in src/app.css, files in static/fonts), so no
          request goes to Google for them. -->

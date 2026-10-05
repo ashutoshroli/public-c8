@@ -95,3 +95,15 @@ describe('the rupee sign never pulls the big Devanagari webfont', () => {
     expect(line.indexOf("'Rupee'")).toBeLessThan(line.indexOf('Noto Sans Devanagari'));
   });
 });
+
+describe('the API origin is warmed up before the data request', () => {
+  it('app.html preconnects (crossorigin) to the same host config.ts falls back to', () => {
+    const cfg = read('src/lib/config.ts');
+    const host = (cfg.match(/PUBLIC_API_BASE:\s*'(https:\/\/[^']+)'/) || [])[1];
+    expect(host, 'PUBLIC_API_BASE default not found in config.ts').toBeTruthy();
+    const html = read('src/app.html');
+    const tag = html.match(/<link[^>]*rel="preconnect"[^>]*>/g)?.find((t) => t.includes(host as string));
+    expect(tag, `no <link rel="preconnect"> for ${host}`).toBeTruthy();
+    expect(tag).toMatch(/crossorigin/);
+  });
+});
