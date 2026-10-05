@@ -10,17 +10,17 @@ const read = (p: string) => readFileSync(join(SRC, p), 'utf8');
 
 describe('whatsappUrl', () => {
   it('adds the India code to a bare 10-digit number', () => {
-    expect(whatsappUrl('7282032146')).toBe('https://wa.me/917282032146');
-    expect(whatsappUrl(7282032146)).toBe('https://wa.me/917282032146');
+    expect(whatsappUrl('9876543210')).toBe('https://wa.me/919876543210');
+    expect(whatsappUrl(9876543210)).toBe('https://wa.me/919876543210');
   });
 
   it('keeps a number that already has a country code, and drops formatting', () => {
-    expect(whatsappUrl('+91 72820 32146')).toBe('https://wa.me/917282032146');
-    expect(whatsappUrl('917282032146')).toBe('https://wa.me/917282032146');
+    expect(whatsappUrl('+91 98765 43210')).toBe('https://wa.me/919876543210');
+    expect(whatsappUrl('919876543210')).toBe('https://wa.me/919876543210');
   });
 
   it('drops a leading trunk zero', () => {
-    expect(whatsappUrl('07282032146')).toBe('https://wa.me/917282032146');
+    expect(whatsappUrl('09876543210')).toBe('https://wa.me/919876543210');
   });
 
   it('returns "" for anything that cannot be a number', () => {
@@ -33,7 +33,7 @@ describe('whatsappUrl', () => {
 
 describe('telHref', () => {
   it('keeps only dialable characters', () => {
-    expect(telHref('+91 72820-32146')).toBe('tel:+917282032146');
+    expect(telHref('+91 98765-43210')).toBe('tel:+919876543210');
     expect(telHref('')).toBe('');
   });
 });

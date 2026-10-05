@@ -6,7 +6,7 @@
 // (same style as gtm.test.ts) so none of that creeps back unnoticed.
 
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 
 const ROOT = process.cwd();
@@ -27,7 +27,6 @@ describe('English first load does not fetch the Devanagari webfont', () => {
   });
 
   it('no other Devanagari text sits in the Svelte markup outside the toggle and comments', () => {
-    const { readdirSync, statSync } = require('node:fs') as typeof import('node:fs');
     const hits: string[] = [];
     const walk = (dir: string) => {
       for (const f of readdirSync(dir)) {
@@ -78,5 +77,21 @@ describe('images and fonts do not cause layout shift or late text', () => {
     const html = read('src/app.html');
     expect(html).toContain('rel="preload" href="/fonts/manrope-latin-wght-normal.woff2" as="font"');
     expect(html, 'font preloads must be crossorigin even when same-origin').toMatch(/manrope-latin[^>]*crossorigin/);
+  });
+});
+
+describe('the rupee sign never pulls the big Devanagari webfont', () => {
+  const css = read('src/app.css');
+  const block = (family: string) => css.slice(css.indexOf(`font-family: '${family}'`), css.indexOf('}', css.indexOf(`font-family: '${family}'`)));
+
+  it('U+20B9 is claimed by the small Rupee face, not the Devanagari one', () => {
+    expect(block('Rupee')).toContain('U+20B9');
+    expect(block('Noto Sans Devanagari Variable')).not.toContain('U+20B9');
+  });
+
+  it('Rupee sits before the Devanagari face in the sans stack', () => {
+    const line = read('tailwind.config.ts').split('\n').find((l) => l.trim().startsWith('sans:')) || '';
+    expect(line.indexOf("'Rupee'")).toBeGreaterThan(-1);
+    expect(line.indexOf("'Rupee'")).toBeLessThan(line.indexOf('Noto Sans Devanagari'));
   });
 });

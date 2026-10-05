@@ -35,7 +35,7 @@ export default {
       fontFamily: {
         // Device fonts only (no webfont): used where a webfont download is not worth it.
         system: ['system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Noto Sans Devanagari', 'Nirmala UI', 'sans-serif'],
-        sans: ['Manrope Variable', 'Manrope', 'Noto Sans Devanagari Variable', 'Noto Sans Devanagari', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Arial', 'sans-serif']
+        sans: ['Manrope Variable', 'Manrope', 'Rupee', 'Noto Sans Devanagari Variable', 'Noto Sans Devanagari', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Arial', 'sans-serif']
       },
       boxShadow: {
         card: '0 1px 2px rgba(22,32,27,.04)'

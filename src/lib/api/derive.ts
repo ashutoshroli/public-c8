@@ -535,14 +535,14 @@ export function committeeForYear(
     const id = (r.ID ?? r.Name ?? '').toString().trim();
     const u = userMap.get(id);
     return {
-      name: (u?.Name ?? r.Name ?? id).toString(),
-      nameHindi: (u?.['Name (Hindi)'] ?? '').toString(),
+      name: (rowField(u, 'Name') || (r.Name ?? id)).toString(),
+      nameHindi: rowField(u, 'Name (Hindi)'),
       role: (r['View Role'] ?? '').toString(),
       roleHindi: (r['View Role (Hindi)'] ?? '').toString(),
-      designation: (u?.Designation ?? '').toString(),
-      designationHindi: (u?.['Designation (Hindi)'] ?? '').toString(),
-      village: (u?.Village ?? '').toString(),
-      villageHindi: (u?.['Village (Hindi)'] ?? '').toString(),
+      designation: rowField(u, 'Designation'),
+      designationHindi: rowField(u, 'Designation (Hindi)'),
+      village: rowField(u, 'Village'),
+      villageHindi: rowField(u, 'Village (Hindi)'),
       mobile: rowField(u, 'Mobile'),
       year: (r.Year ?? '').toString(),
       seed: id || (r.Name ?? '').toString()
@@ -634,10 +634,10 @@ function guarantorsForLoan(
       (c) => yint(c.Year) === loanYear && ((c.ID ?? '').toString() === gid || (c.Name ?? '').toString() === gid)
     );
     return {
-      name: (u?.Name ?? gid).toString(),
-      nameHindi: (u?.['Name (Hindi)'] ?? '').toString(),
-      village: (u?.Village ?? '').toString(),
-      villageHindi: (u?.['Village (Hindi)'] ?? '').toString(),
+      name: (rowField(u, 'Name') || gid).toString(),
+      nameHindi: rowField(u, 'Name (Hindi)'),
+      village: rowField(u, 'Village'),
+      villageHindi: rowField(u, 'Village (Hindi)'),
       isContributor,
       isCommittee,
       ruleViolation: isCommittee,
@@ -659,8 +659,8 @@ export function loanItems(
     const loanYear = yint(l.Year);
     return {
       receiverId,
-      name: (u?.Name ?? l.Name ?? receiverId).toString(),
-      nameHindi: (u?.['Name (Hindi)'] ?? '').toString(),
+      name: (rowField(u, 'Name') || (l.Name ?? receiverId)).toString(),
+      nameHindi: rowField(u, 'Name (Hindi)'),
       loanId,
       principal: calc.principal,
       interest: calc.interest,
@@ -825,10 +825,10 @@ export function verifyRecord(data: PortalData, recordId: string): VerifyResult {
   const key = (entry.ID ?? entry.Name ?? '').toString().trim();
   const u = map.get(key);
   base.details = {
-    name: (u?.Name ?? entry.Name ?? '').toString(),
-    nameHindi: (u?.['Name (Hindi)'] ?? '').toString(),
-    village: (u?.Village ?? '').toString(),
-    villageHindi: (u?.['Village (Hindi)'] ?? '').toString(),
+    name: (rowField(u, 'Name') || (entry.Name ?? '')).toString(),
+    nameHindi: rowField(u, 'Name (Hindi)'),
+    village: rowField(u, 'Village'),
+    villageHindi: rowField(u, 'Village (Hindi)'),
     amount: parseAmt(entry.Amount),
     detail: (entry.Detail ?? '').toString(),
     isResell: false

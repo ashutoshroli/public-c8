@@ -92,7 +92,8 @@
 
 /* ---- Self-hosted fonts (SIL OFL, see static/fonts/LICENSE-*.txt) ----
    Only the two subsets this portal needs: Latin for Manrope, and Devanagari for Noto Sans
-   Devanagari (it also carries the rupee sign). Served from our own origin, so no visitor IP
+   Devanagari. The rupee sign (U+20B9) has its own ~1 kB subset below so English pages
+   never pull the big Devanagari file just to draw a price. Served from our own origin, so no visitor IP
    goes to Google for fonts. */
 @font-face {
   font-family: 'Manrope Variable';
@@ -109,8 +110,16 @@
   font-display: swap;
   font-weight: 100 900;
   src: url('/fonts/noto-sans-devanagari-devanagari-wght-normal.woff2') format('woff2-variations');
-  unicode-range: U+0900-097F, U+1CD0-1CF9, U+200C-200D, U+20A8, U+20B9, U+20F0, U+25CC, U+A830-A839,
+  unicode-range: U+0900-097F, U+1CD0-1CF9, U+200C-200D, U+20A8, U+20F0, U+25CC, U+A830-A839,
     U+A8E0-A8FF, U+11B00-11B09;
+}
+@font-face {
+  font-family: 'Rupee';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('/fonts/noto-rupee.woff2') format('woff2-variations');
+  unicode-range: U+20B9;
 }
 
 /* ---- Consent banner: sits above the fixed mobile tab bar, bottom-right on desktop ---- */
