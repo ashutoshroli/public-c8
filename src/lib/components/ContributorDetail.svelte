@@ -3,7 +3,8 @@
   import { dialog } from '$lib/a11y/dialog'; // audit PR-36
   import type { Ranked } from '$lib/utils/ranking';
   import type { Contributor } from '$lib/api/derive';
-  import { fmt, initials, avatarGradient, shouldShowPhoto } from '$lib/utils/format';
+  import { fmt } from '$lib/utils/format';
+  import Avatar from './Avatar.svelte';
   import { lang, tr } from '$lib/stores/lang';
 
   interface Props {
@@ -22,17 +23,6 @@
   let kindLabel = $derived(
     c && !c.hasMoney ? (c.kinds.has('material') ? $tr('material') : $tr('service')) : ''
   );
-  let grad = $derived(avatarGradient(c?.key));
-
-  // Show the profile photo when present; fall back to the initials avatar when
-  // there is no photo OR the image fails to load. Same pattern as
-  // ContributorCard/ContributorsListModal. Reset the failure flag whenever the
-  // shown contributor's photo changes so a previous error does not stick.
-  let photoFailed = $state(false);
-  $effect(() => {
-    void c?.photo;
-    photoFailed = false;
-  });
 </script>
 
 {#if entry && c}
@@ -61,25 +51,7 @@
 
       <div class="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
       <div class="mt-3 flex flex-col items-center text-center">
-        {#if shouldShowPhoto(c.photo, photoFailed)}
-          <img
-            src={c.photo}
-            alt={displayName}
-            decoding="async"
-            width="80"
-            height="80"
-            class="h-20 w-20 rounded-full object-cover"
-            onerror={() => (photoFailed = true)}
-          />
-        {:else}
-          <span
-            class="grid h-20 w-20 place-items-center rounded-full text-2xl font-extrabold text-white"
-            style="background-image: linear-gradient(135deg, {grad[0]}, {grad[1]})"
-            aria-hidden="true"
-          >
-            {initials(displayName)}
-          </span>
-        {/if}
+        <Avatar photo={c.photo} name={displayName} seed={c.key} size={80} textClass="text-2xl" lazy={false} />
         <p class="mt-3 text-lg font-extrabold">{displayName}</p>
         {#if displayDesignation}
           <p class="text-xs font-semibold text-brand-600">{displayDesignation}</p>

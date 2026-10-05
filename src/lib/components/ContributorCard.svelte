@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { Ranked } from '$lib/utils/ranking';
   import { contributorTags, type Contributor } from '$lib/api/derive';
-  import { fmt, initials, avatarGradient } from '$lib/utils/format';
+  import { fmt } from '$lib/utils/format';
+  import Avatar from './Avatar.svelte';
   import { lang, tr } from '$lib/stores/lang';
 
   interface Props {
@@ -14,16 +15,9 @@
 
   let c = $derived(entry.item);
   let displayName = $derived($lang === 'hi' && c.nameHindi ? c.nameHindi : c.name);
-  let grad = $derived(avatarGradient(c.key));
   let tags = $derived(contributorTags(c));
   let nonMoneyTags = $derived(tags.filter((t) => t !== 'money') as Array<'material' | 'service'>);
   const tagLabel = (t: 'material' | 'service') => (t === 'material' ? $tr('material') : $tr('service'));
-
-  let photoFailed = $state(false);
-  $effect(() => {
-    void c.photo;
-    photoFailed = false;
-  });
 </script>
 
 <button
@@ -40,24 +34,7 @@
     >{entry.rank}</span>
   {/if}
 
-  {#if c.photo && !photoFailed}
-    <img
-      src={c.photo}
-      alt={displayName}
-      loading="lazy"
-      decoding="async"
-      width="44"
-      height="44"
-      class="h-11 w-11 rounded-full object-cover"
-      onerror={() => (photoFailed = true)}
-    />
-  {:else}
-    <span
-      class="grid h-11 w-11 place-items-center rounded-full text-sm font-extrabold text-white"
-      style="background-image: linear-gradient(135deg, {grad[0]}, {grad[1]})"
-      aria-hidden="true"
-    >{initials(displayName)}</span>
-  {/if}
+  <Avatar photo={c.photo} name={displayName} seed={c.key} size={44} />
 
   <span class="mt-2 line-clamp-1 w-full text-[12px] font-bold" title={displayName}>{displayName}</span>
 

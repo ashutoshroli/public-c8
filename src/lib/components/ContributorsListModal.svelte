@@ -6,8 +6,8 @@
   import { tr, lang } from '$lib/stores/lang';
   import { rankedContributors, resoldItemsForYear, contributorTags, ALL_YEARS, type Contributor } from '$lib/api/derive';
   import type { Ranked } from '$lib/utils/ranking';
-  import { fmt, initials, avatarGradient } from '$lib/utils/format';
-  import { SvelteSet } from 'svelte/reactivity';
+  import { fmt } from '$lib/utils/format';
+  import Avatar from './Avatar.svelte';
 
   interface Props {
     open: boolean;
@@ -24,10 +24,6 @@
   type Tab = 'contributors' | 'resold';
   let tab = $state<Tab>('contributors');
   const tagLabel = (k: 'material' | 'service') => (k === 'material' ? $tr('material') : $tr('service'));
-
-  // Photos that failed to load — those rows fall back to the initials avatar
-  // instead of hiding the image and leaving a blank gap.
-  let failedPhotos = $state(new SvelteSet<string>());
 
   // Tapping a row opens the shared ContributorDetail card (with photo) layered
   // above this list modal. `use:dialog` manages focus for the topmost dialog.
@@ -63,7 +59,6 @@
     {:else}
       <ul class="space-y-2">
         {#each ranked as entry (entry.item.key)}
-          {@const grad = avatarGradient(entry.item.key)}
           {@const tags = contributorTags(entry.item)}
           <li>
             <button
@@ -75,25 +70,7 @@
                 : 'border-line bg-canvas'}"
             >
             <span class="relative">
-              {#if entry.item.photo && !failedPhotos.has(entry.item.key)}
-                <img
-                  src={entry.item.photo}
-                  alt={nameOf(entry.item)}
-                  loading="lazy"
-                  decoding="async"
-                  width="40"
-                  height="40"
-                  class="h-10 w-10 rounded-full object-cover"
-                  onerror={() => failedPhotos.add(entry.item.key)}
-                />
-              {:else}
-                <span
-                  class="grid h-10 w-10 place-items-center rounded-full text-sm font-extrabold text-white"
-                  style="background-image: linear-gradient(135deg, {grad[0]}, {grad[1]})"
-                >
-                  {initials(nameOf(entry.item))}
-                </span>
-              {/if}
+              <Avatar photo={entry.item.photo} name={nameOf(entry.item)} seed={entry.item.key} size={40} />
               {#if entry.isTop}
                 <span class="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-gold text-[9px] font-extrabold text-amber-900">
                   {entry.rank}
