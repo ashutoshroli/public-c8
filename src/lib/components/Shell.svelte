@@ -69,7 +69,7 @@
 </main>
 
 <footer class="mx-auto max-w-6xl px-4 pb-28 lg:pb-10">
-  <div class="flex flex-col gap-2 border-t border-line pt-5 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
+  <div class="flex flex-col items-center gap-2 border-t border-line pt-5 text-center text-xs text-muted sm:flex-row sm:justify-between sm:text-left">
     <p>{$tr('org_name')} · {$tr('org_location')}</p>
     <FooterLinks />
   </div>
