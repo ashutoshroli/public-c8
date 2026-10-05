@@ -8,7 +8,7 @@ import { defineConfig } from 'vitest/config';
 // Single source of truth for the IARC certificate — the same module the /guide
 // page's "Age ratings" block renders from, so the manifest and the UI can never
 // advertise different ratings. Dependency-free on purpose (see src/lib/ratings.ts).
-import { IARC_RATING_ID } from './src/lib/ratings';
+import { IARC_RATING_ID } from './src/lib/ratings.ts';
 
 // PWA: app-shell offline support. Static assets are precached; the portal API
 // (Cloudflare Worker) uses NetworkFirst so visitors always get fresh data when
