@@ -245,5 +245,4 @@ export function reportError(message: string, err?: unknown, extra?: Record<strin
   }
 }
 
-export const chatUrl = config.renderChatUrl;
 export const mgmtLoginUrl = config.mgmtLoginUrl;

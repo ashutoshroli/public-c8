@@ -46,8 +46,6 @@ export const T: Record<Lang, Dict> = {
     guide_language_p: 'Use the language button in the header to toggle between English and \u0939\u093f\u0902\u0926\u0940. Your choice is remembered on this device.',
     guide_year_h: 'Switch the year',
     guide_year_p: 'Use the year dropdown in the header to view any year from 2017 to the current year. All figures, contributors and records update to that year.',
-    guide_chatbot_h: 'Ask the assistant (Chatbot)',
-    guide_chatbot_p: 'The floating chat button (bottom-right) opens an assistant you can ask about the portal — totals, top contributors, a person\u2019s records, and more. Type your question in English or Hindi and it answers from the public data.',
     guide_gallery_h: 'Theme Gallery',
     guide_gallery_p: 'A preview of every theme in its real colours. Tap any preview to apply that theme.',
     guide_install_h: 'Install the app',
@@ -273,11 +271,6 @@ export const T: Record<Lang, Dict> = {
     no_committee: 'No committee on record.',
     no_matches: 'No matches found.',
     no_docs: 'No records available.',
-    chat_placeholder: 'Type your question…',
-    chat_error: 'Sorry, something went wrong. Please try again.',
-    chat_limit: 'The assistant has reached today’s limit or is busy right now. Please try again shortly.',
-    chat_busy: 'You’re sending messages too fast. Please wait a moment and try again.',
-    chat_welcome: '🙏 Namaste! I am the Chhath portal assistant. Ask me about contributions, expenses, loans, committee members, or downloads.',
     verified_record: 'Verified Record',
     record_not_found: 'Record Not Found',
     verify_title: 'Record Verification',
@@ -511,7 +504,6 @@ export const T: Record<Lang, Dict> = {
     total_with_interest: 'Total (with interest)',
     principal: 'Principal',
     documents: 'Documents',
-    ask_assistant: 'Ask the assistant',
     send: 'Send'
   },
   hi: {
@@ -542,8 +534,6 @@ export const T: Record<Lang, Dict> = {
     guide_language_p: 'Header में language button से English और हिंदी के बीच toggle करें। आपकी पसंद इस device पर याद रखी जाती है।',
     guide_year_h: 'वर्ष बदलें',
     guide_year_p: 'Header में year dropdown से 2017 से वर्तमान वर्ष तक कोई भी वर्ष देखें। सभी आँकड़े, contributors और records उसी वर्ष के अनुसार बदल जाते हैं।',
-    guide_chatbot_h: 'सहायक से पूछें (Chatbot)',
-    guide_chatbot_p: 'नीचे-दाईं ओर floating chat button एक सहायक खोलता है जिससे आप पोर्टल के बारे में पूछ सकते हैं — कुल राशि, top contributors, किसी व्यक्ति के records, और भी बहुत कुछ। अपना प्रश्न English या हिंदी में लिखें, यह public data से उत्तर देता है।',
     guide_gallery_h: 'थीम गैलरी',
     guide_gallery_p: 'हर theme का उसके असली रंगों में preview। किसी भी preview पर tap करके वह theme लागू करें।',
     guide_install_h: 'ऐप इंस्टॉल करें',
@@ -769,11 +759,6 @@ export const T: Record<Lang, Dict> = {
     no_committee: 'कोई समिति दर्ज नहीं है।',
     no_matches: 'कोई परिणाम नहीं मिला।',
     no_docs: 'कोई दस्तावेज़ उपलब्ध नहीं है।',
-    chat_placeholder: 'अपना प्रश्न लिखें…',
-    chat_error: 'क्षमा करें, कुछ गड़बड़ हुई। कृपया पुनः प्रयास करें।',
-    chat_limit: 'सहायक आज की सीमा तक पहुँच गया है या अभी व्यस्त है। कृपया थोड़ी देर बाद पुनः प्रयास करें।',
-    chat_busy: 'आप बहुत तेज़ी से संदेश भेज रहे हैं। कृपया थोड़ा रुककर पुनः प्रयास करें।',
-    chat_welcome: '🙏 नमस्ते! मैं छठ पोर्टल सहायक हूँ। योगदान, खर्च, ऋण, समिति सदस्य या डाउनलोड के बारे में पूछें।',
     verified_record: 'सत्यापित रिकॉर्ड',
     record_not_found: 'रिकॉर्ड नहीं मिला',
     verify_title: 'रिकॉर्ड सत्यापन',
@@ -1007,7 +992,6 @@ export const T: Record<Lang, Dict> = {
     total_with_interest: 'कुल (ब्याज सहित)',
     principal: 'मूलधन',
     documents: 'दस्तावेज़',
-    ask_assistant: 'सहायक से पूछें',
     send: 'भेजें'
   }
 };
