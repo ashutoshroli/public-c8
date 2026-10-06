@@ -159,7 +159,7 @@ export const T: Record<Lang, Dict> = {
       'The published records — contributions, expenses, loans, committee lists — are kept as the committee’s permanent accounts, because that is the point of publishing them. Anything technical is short-lived: error reports are pruned automatically, and a notification address is dropped as soon as it stops working or you turn notifications off. If you accept analytics, the data Google and Microsoft collect is kept under their own policies.',
     privacy_rights_h: 'Corrections and removal',
     privacy_rights_p:
-      'If something published about you is wrong, email the committee at {email} and ask for a correction; the committee will fix its ledger and the portal will update. If you do not want your details shown, ask for removal: your contribution will be moved to “Anonymous”. Your name, village, father\'s name and photo will no longer be shown, but the amount is still counted in the totals and in the contributor count, so the accounts stay complete. Loan records (borrower and guarantors) are different: a wrong name can be corrected, but a loan record cannot be made anonymous.',
+      'If something published about you is wrong, email the committee at {email} and ask for a correction; the committee will fix its ledger and the portal will update. If you do not want your details shown, ask for removal: your contribution will be moved to “Anonymous”. Your name, village, father\'s name and photo will no longer be shown, but the amount is still counted in the totals and in the contributor count, so the accounts stay complete. This applies to your contributions in the current year and in all earlier years. It is permanent: once a person has been marked Anonymous, the committee will not show them by name again. For later years, if you want to stay anonymous, tell the committee when you contribute. Loan records (borrower and guarantors) are different: a wrong name can be corrected, but a loan record cannot be made anonymous.',
     privacy_contact_p:
       'For corrections, removal or questions about your record, please email the committee at {email}.',
     terms_subtitle: 'Terms of Use',
@@ -187,7 +187,7 @@ export const T: Record<Lang, Dict> = {
     terms_see_privacy: 'Read the Privacy Policy',
     terms_donations_h: 'Donations',
     terms_donations_p:
-      'Donations are voluntary. The payment details on the Donate page are published by the committee; if in doubt, confirm them with the committee before paying. Once a contribution is given, there is no refund policy and no refund will be made, so please check the details before paying. If the record shows something wrong, contact the committee to have it corrected.',
+      'Donations are voluntary. The payment details on the Donate page are published by the committee; if in doubt, confirm them with the committee before paying. Once a contribution is given, there is no refund policy and no refund will be made, so please check the details before paying. If the record shows something wrong, contact the committee to have it corrected. If you want your contribution shown as Anonymous, tell the committee when you contribute (see the Privacy page).',
     nav_home: 'Home',
     nav_expenses: 'Expenses',
     nav_loans: 'Loans',
@@ -712,7 +712,7 @@ export const T: Record<Lang, Dict> = {
       'प्रकाशित रिकॉर्ड — चंदा, ख़र्च, ऋण, समिति की सूची — समिति के स्थायी हिसाब के रूप में रखे जाते हैं, क्योंकि उन्हें प्रकाशित करने का मक़सद ही यही है। तकनीकी चीज़ें कम समय की हैं: ग़लती की रिपोर्टें अपने आप हटती रहती हैं, और सूचना का पता तभी तक रहता है जब तक वह काम करता है या आप सूचनाएँ बंद नहीं करते। अगर आप analytics स्वीकार करते हैं, तो Google और Microsoft जो डेटा इकट्ठा करते हैं वह उनकी अपनी नीतियों के अनुसार रखा जाता है।',
     privacy_rights_h: 'सुधार और हटाना',
     privacy_rights_p:
-      'अगर आपके बारे में प्रकाशित कोई जानकारी ग़लत है, तो समिति को {email} पर ईमेल करके सुधार का अनुरोध करें; समिति अपना रजिस्टर ठीक करेगी और पोर्टल पर वह बदल जाएगा। अगर आप अपनी जानकारी नहीं दिखाना चाहते, तो हटाने का अनुरोध करें: आपका योगदान “गुमनाम” में कर दिया जाएगा। आपका नाम, गाँव, पिता का नाम और फ़ोटो नहीं दिखेंगे, पर राशि कुल योग और योगदानकर्ताओं की गिनती में गिनी जाती रहेगी, ताकि हिसाब पूरा रहे। ऋण के रिकॉर्ड (उधार लेने वाले और गारंटर) अलग हैं: नाम ग़लत हो तो सुधारा जा सकता है, पर ऋण के रिकॉर्ड को गुमनाम नहीं किया जा सकता।',
+      'अगर आपके बारे में प्रकाशित कोई जानकारी ग़लत है, तो समिति को {email} पर ईमेल करके सुधार का अनुरोध करें; समिति अपना रजिस्टर ठीक करेगी और पोर्टल पर वह बदल जाएगा। अगर आप अपनी जानकारी नहीं दिखाना चाहते, तो हटाने का अनुरोध करें: आपका योगदान “गुमनाम” में कर दिया जाएगा। आपका नाम, गाँव, पिता का नाम और फ़ोटो नहीं दिखेंगे, पर राशि कुल योग और योगदानकर्ताओं की गिनती में गिनी जाती रहेगी, ताकि हिसाब पूरा रहे। यह आपके चालू वर्ष और पिछले सभी वर्षों के योगदान पर लागू होता है। यह स्थायी है: एक बार किसी को गुमनाम (Anonymous) कर दिया जाए तो समिति उसे दोबारा नाम के साथ नहीं दिखाएगी। आगे के वर्षों में भी गुमनाम रहना चाहें तो योगदान देते समय समिति को बता दें। ऋण के रिकॉर्ड (उधार लेने वाले और गारंटर) अलग हैं: नाम ग़लत हो तो सुधारा जा सकता है, पर ऋण के रिकॉर्ड को गुमनाम नहीं किया जा सकता।',
     privacy_contact_p:
       'अपने record में सुधार, हटवाने या किसी प्रश्न के लिए कृपया समिति को {email} पर ईमेल करें।',
     terms_subtitle: 'उपयोग की शर्तें',
@@ -740,7 +740,7 @@ export const T: Record<Lang, Dict> = {
     terms_see_privacy: 'गोपनीयता नीति पढ़ें',
     terms_donations_h: 'दान',
     terms_donations_p:
-      'दान स्वैच्छिक है। Donate पेज पर दिए गए भुगतान विवरण समिति द्वारा प्रकाशित हैं; संदेह होने पर भुगतान से पहले समिति से पुष्टि कर लें। एक बार योगदान दे देने के बाद कोई रिफ़ंड नीति नहीं है और कोई रिफ़ंड नहीं किया जाएगा, इसलिए भुगतान से पहले विवरण ज़रूर जाँच लें। रिकॉर्ड में कोई जानकारी ग़लत दिखे तो सुधार के लिए समिति से संपर्क करें।',
+      'दान स्वैच्छिक है। Donate पेज पर दिए गए भुगतान विवरण समिति द्वारा प्रकाशित हैं; संदेह होने पर भुगतान से पहले समिति से पुष्टि कर लें। एक बार योगदान दे देने के बाद कोई रिफ़ंड नीति नहीं है और कोई रिफ़ंड नहीं किया जाएगा, इसलिए भुगतान से पहले विवरण ज़रूर जाँच लें। रिकॉर्ड में कोई जानकारी ग़लत दिखे तो सुधार के लिए समिति से संपर्क करें। अगर आप चाहते हैं कि आपका योगदान गुमनाम (Anonymous) दिखे, तो योगदान देते समय समिति को बता दें (गोपनीयता पेज देखें)।',
     nav_home: 'होम',
     nav_expenses: 'व्यय',
     nav_loans: 'ऋण',
