@@ -13,6 +13,8 @@
 <nav class="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs" aria-label="Footer">
   <a href="/guide" class={linkClass}>{$tr('guide_footer_link')}</a>
   <span class="opacity-40" aria-hidden="true">·</span>
+  <a href="/loan-rules" class={linkClass}>{$tr('footer_loan_rules')}</a>
+  <span class="opacity-40" aria-hidden="true">·</span>
   <a href="/privacy" class={linkClass}>{$tr('footer_privacy')}</a>
   <span class="opacity-40" aria-hidden="true">·</span>
   <a href="/terms" class={linkClass}>{$tr('footer_terms')}</a>

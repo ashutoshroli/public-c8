@@ -20,6 +20,7 @@
  * Contributor aggregation + competition ranking are new (no ranking existed
  * before) but computed entirely from real collection amounts.
  */
+import { committeeGuarantorBanned } from '$lib/loanRules';
 import { parseAmt } from '$lib/utils/format';
 import { rowField } from './rowField';
 import { competitionRank, type Ranked } from '$lib/utils/ranking';
@@ -579,9 +580,11 @@ export interface GuarantorItem {
   villageHindi: string;
   isContributor: boolean;
   isCommittee: boolean;
-  /** true when the guarantor is a committee member for the loan's year
-   *  (base version flags this as a "Rule Violation"). */
+  /** true when the guarantor is a committee member AND the loan was given in a year when
+   *  that was against the rules (see loanRules.ts). */
   ruleViolation: boolean;
+  /** true when the guarantor is a committee member but the rule did not exist yet that year. */
+  allowedAtTheTime: boolean;
   seed: string;
 }
 
@@ -605,7 +608,8 @@ export interface LoanItem {
  *  - if the loan has a Loan ID -> match guarantor rows by that Loan ID;
  *  - else -> match by year AND (Loaner | ID | Name === receiverId).
  * Each guarantor is flagged Contributor / Committee for the loan's year, and
- * ruleViolation === isCommittee (committee members may not stand guarantor).
+ * ruleViolation = isCommittee AND the year's rules forbid it (committee members may not stand
+ * guarantor from 2023 — earlier loans are "allowed at the time", see loanRules.ts).
  */
 function guarantorsForLoan(
   data: PortalData,
@@ -640,7 +644,8 @@ function guarantorsForLoan(
       villageHindi: rowField(u, 'Village (Hindi)'),
       isContributor,
       isCommittee,
-      ruleViolation: isCommittee,
+      ruleViolation: isCommittee && committeeGuarantorBanned(loanYear),
+      allowedAtTheTime: isCommittee && !committeeGuarantorBanned(loanYear),
       seed: gid
     };
   });

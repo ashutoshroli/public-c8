@@ -8,6 +8,7 @@
   import { tr, lang } from '$lib/stores/lang';
   import { loanItems } from '$lib/api/derive';
   import { fmt, initials, avatarGradient } from '$lib/utils/format';
+  import { COMMITTEE_GUARANTOR_BAN_FROM_YEAR } from '$lib/loanRules';
 
   let loading = $derived($portalState.status === 'loading');
   let items = $derived(loanItems($portalState.data, $year));
@@ -106,7 +107,11 @@
                         <span>{$tr('committee_yes_no')}: {g.isCommittee ? $tr('yes') : $tr('no')}</span>
                       </p>
                     </div>
-                    {#if g.ruleViolation}
+                    {#if g.allowedAtTheTime}
+                      <span class="inline-flex shrink-0 items-center gap-1 rounded-full bg-canvas px-2 py-0.5 text-[10px] font-bold text-muted ring-1 ring-line">
+                        <ShieldCheck class="h-3 w-3" aria-hidden="true" />{$tr('allowed_at_the_time')}
+                      </span>
+                    {:else if g.ruleViolation}
                       <span class="inline-flex shrink-0 items-center gap-1 rounded-full bg-danger/10 px-2 py-0.5 text-[10px] font-bold text-danger">
                         <ShieldAlert class="h-3 w-3" aria-hidden="true" />{$tr('rule_violation')}
                       </span>
@@ -118,10 +123,19 @@
                   </li>
                 {/each}
               </ul>
+              {#if l.guarantors.some((g) => g.allowedAtTheTime)}
+                <p class="mt-2 text-[11px] leading-snug text-muted">
+                  {$tr('lr_old_loan_note', { year: l.year, ban_year: COMMITTEE_GUARANTOR_BAN_FROM_YEAR })}
+                </p>
+              {/if}
             {/if}
           </div>
         </li>
       {/each}
     </ul>
   {/if}
+
+  <p class="mt-4 text-center text-xs">
+    <a href="/loan-rules" class="font-semibold text-brand-700 underline underline-offset-2">{$tr('loan_rules_link')}</a>
+  </p>
 {/if}

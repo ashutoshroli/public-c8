@@ -113,6 +113,14 @@ export const ROUTES: RouteMeta[] = [
     priority: '0.4',
   },
   {
+    path: '/loan-rules',
+    titleKey: 'loan_rules_subtitle',
+    description:
+      'How the committee lends the leftover fund: bidding, three guarantors, consent and repayment, and since when each loan rule applies.',
+    changefreq: 'yearly',
+    priority: '0.4',
+  },
+  {
     path: '/privacy',
     titleKey: 'privacy_subtitle',
     description:
