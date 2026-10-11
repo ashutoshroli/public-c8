@@ -144,22 +144,26 @@ export const T: Record<Lang, Dict> = {
       'Contribution and committee entries can include a person\'s name, village, father\'s name and photo, and, for committee members, a mobile number. Loan records show the borrower and guarantors. The committee publishes these only for community transparency. If you do not want a detail about you shown, or one is wrong, email the committee at {email} and it will be corrected. If you ask for removal, your contribution will be shown as “Anonymous” instead. Loan records can be corrected but not made anonymous.',
     privacy_cookies_h: 'Analytics and cookies',
     privacy_cookies_p:
-      'Analytics are off by default. Only if you press Accept does the portal load Google Tag Manager, which runs Google Analytics (visit counts) and Microsoft Clarity (how pages are used, such as taps and scrolling). They set cookies such as _ga and _clck and receive your IP address. If you decline, none of them load, and you can change your choice any time with Cookie settings in the footer. Nothing else on this portal uses cookies.',
+      'Analytics are off by default. Only if you press Accept does the portal load Google Tag Manager, which runs Google Analytics (visit counts) and Microsoft Clarity (how pages are used: clicks, taps, scrolling and other interactions, with sensitive content masked as described in Microsoft’s documentation). They set cookies such as _ga and _clck. As with any website, their servers receive your IP address with each request: Google says Google Analytics does not log or store individual IP addresses, and Clarity uses the IP address to estimate your approximate location. If you decline, none of them load, and you can change your choice any time with Cookie settings in the footer. Other than the services described here, the portal does not intentionally use additional tracking cookies.',
     privacy_push_h: 'Notifications',
     privacy_push_p:
-      'If you turn notifications on, your browser gives us an address to deliver them to. It identifies your browser, not you: no name, no phone number, no email. Turn them off in the menu at any time and the address stops being used. Notifications you have received are stored on this device only, capped at the newest 50, and are cleared when you clear site data.',
+      'If you turn notifications on, your browser gives us an address to deliver them to. It identifies your browser, not you: no name, no phone number, no email. Turn them off in the menu at any time: your browser then cancels the address, and the stored copy is switched off the next time delivery to it fails. Notifications you have received are stored on this device only, capped at the newest 50, and are cleared when you clear site data.',
     privacy_offline_h: 'What is stored on your device',
     privacy_offline_p:
       'So the portal opens quickly and works offline, your browser keeps a copy of the pages and the last figures it fetched, plus small settings such as your chosen theme and language, and which announcement you have already seen. All of it is on your device. Clearing site data in your browser removes every bit of it.',
     privacy_thirdparty_h: 'Who else is involved',
     privacy_thirdparty_p:
-      'Fonts are now served from the portal itself, so Google no longer sees you for fonts. The only outside services are Google Analytics and Microsoft Clarity, and only if you accept analytics cookies. The site is delivered through hosting and network providers (Vercel and Cloudflare), which see your IP address and request details, as any host does, to deliver pages. The data itself comes from the committee’s own servers.',
+      'Fonts are served from the portal itself, so Google does not see you for fonts. The only outside services are Google Analytics and Microsoft Clarity, and only if you accept analytics cookies. The site is delivered through hosting and network providers (Vercel and Cloudflare), which see your IP address and request details, as any host does, to deliver pages. The data itself comes from the committee’s own servers.',
+    privacy_security_h:
+      'Security',
+    privacy_security_p:
+      'The public API only serves published records. Apart from error reports and notification sign-ups it cannot be written to, and requests to it are rate-limited.',
     privacy_retention_h: 'How long anything is kept',
     privacy_retention_p:
-      'The published records — contributions, expenses, loans, committee lists — are kept as the committee’s permanent accounts, because that is the point of publishing them. Anything technical is short-lived: error reports are pruned automatically, and a notification address is dropped as soon as it stops working or you turn notifications off. If you accept analytics, the data Google and Microsoft collect is kept under their own policies.',
+      'The published records — contributions, expenses, loans, committee lists — are kept as the committee’s permanent accounts, because that is the point of publishing them. Technical data is kept only briefly. Error reports are deleted automatically after 180 days; an error report does not store your IP address, only a scrambled visitor code made with a key that is thrown away after two days, after which the code cannot be tied back to an address. A notification address that stops working, for example because you turned notifications off, is switched off when delivery to it next fails and is deleted automatically 90 days after that. If you accept analytics, the data Google and Microsoft collect is kept under their own policies.',
     privacy_rights_h: 'Corrections and removal',
     privacy_rights_p:
-      'If something published about you is wrong, email the committee at {email} and ask for a correction; the committee will fix its ledger and the portal will update. If you do not want your details shown, ask for removal: your contribution will be moved to “Anonymous”. Your name, village, father\'s name and photo will no longer be shown, but the amount is still counted in the totals and in the contributor count, so the accounts stay complete. This applies to your contributions in the current year and in all earlier years. It is permanent: once a person has been marked Anonymous, the committee will not show them by name again. For later years, if you want to stay anonymous, tell the committee when you contribute. Loan records (borrower and guarantors) are different: a wrong name can be corrected, but a loan record cannot be made anonymous.',
+      'If something published about you is wrong, email the committee at {email} and ask for a correction; the committee will fix its ledger and the portal will update. If you do not want your details shown, ask for removal: your contribution will be moved to “Anonymous”. Your name, village, father\'s name and photo will no longer be shown, but the amount is still counted in the totals and in the contributor count, so the accounts stay complete. This applies to your contributions in the current year and in all earlier years. It is permanent: once a person has been marked Anonymous, the committee will not show them by name again. For later years, if you want to stay anonymous, tell the committee when you contribute. Loan records (borrower and guarantors) are different: a wrong name can be corrected, but a loan record cannot be made anonymous, because a loan is a financial obligation and the people responsible for repaying it must stay identifiable for recovery and accounting. The committee will act on a correction or removal request within 7 to 30 days.',
     privacy_contact_p:
       'For corrections, removal or questions about your record, please email the committee at {email}.',
     terms_subtitle: 'Terms of Use',
@@ -167,7 +171,7 @@ export const T: Record<Lang, Dict> = {
       "This site is provided by {org_name} for community transparency. The information is presented in good faith and is derived from the committee's records.",
     terms_use_h: 'Use of information',
     terms_use_p:
-      'Records are for informational and verification purposes. While the committee strives for accuracy, figures may be updated as records are finalised. The live financial figures are computed from published data.',
+      'Records are for informational and verification purposes. While the committee strives for accuracy, figures may be updated as records are finalised. The live financial figures are computed from published data. Before relying on a figure to make a decision, please confirm it with the committee members.',
     terms_docs_h: 'Documents',
     terms_docs_p:
       'Downloadable receipts and certificates are generated by the committee. If a document shows as \u201cNot Available\u201d, it has not yet been published for that record.',
@@ -185,13 +189,26 @@ export const T: Record<Lang, Dict> = {
     privacy_cookie_change: 'Change cookie choice',
     privacy_see_terms: 'Read the Terms of Use',
     terms_see_privacy: 'Read the Privacy Policy',
+    policy_dates:
+      'Last updated: {updated}',
+    terms_misuse_h: 'Fair use',
+    terms_misuse_p:
+      'Please do not misuse the portal or its records. Do not alter or misrepresent them, pretend to be the committee or anyone else, scrape the portal in a way that overloads it, or try to disrupt it.',
+    terms_contact_h: 'Contact',
+    terms_contact_p: 'For questions about these terms, or to report a mistake in a record, please email the committee at {email}.',
+    terms_law_h:
+      'Governing law and jurisdiction',
+    terms_law_p:
+      'These terms are governed by the laws of India. Only the courts at Giridih, Jharkhand have jurisdiction over any dispute arising from the use of this portal.',
     terms_donations_h: 'Donations',
     terms_donations_p:
-      'Donations are voluntary. The payment details on the Donate page are published by the committee; if in doubt, confirm them with the committee before paying. Once a contribution is given, there is no refund policy and no refund will be made, so please check the details before paying. If the record shows something wrong, contact the committee to have it corrected. If you want your contribution shown as Anonymous, tell the committee when you contribute (see the Privacy page).',
+      'Donations are voluntary. The payment details on the Donate page are published by the committee; if in doubt, confirm them with the committee before paying. Once a contribution is given, there is no refund policy and **no refund will be made**, so please check the details before paying. If the record shows something wrong, contact the committee to have it corrected. If you want your contribution shown as Anonymous, tell the committee when you contribute (see the Privacy page).',
     nav_home: 'Home',
     nav_expenses: 'Expenses',
     nav_loans: 'Loans',
     nav_committee: 'Committee',
+    contact_committee_link:
+      'Committee members’ contact details',
     nav_downloads: 'Downloads',
     nav_more: 'Menu',
     skip_to_content: 'Skip to content',
@@ -314,15 +331,49 @@ export const T: Record<Lang, Dict> = {
     lr_intro_2:
       'This page explains how the loan is given, who can take a loan or become a guarantor, and when each rule started. Every loan is checked according to the rules that were applicable in the year the loan was given.',
     lr_elig_h: 'Who can take a loan or become a guarantor',
-    lr_elig_1: 'The borrower (loaner) must be from Shaharpura or Gardih.',
+    lr_elig_1: 'The borrower must be from Shaharpura or Gardih.',
     lr_elig_2: 'The borrower’s name must be present in that year’s Contribution List.',
     lr_elig_3: 'All 3 guarantors must also be from Shaharpura or Gardih.',
     lr_elig_4: 'The name of each guarantor must also be present in that year’s Contribution List.',
     lr_elig_5: 'A person listed as an Anonymous Contributor cannot take the loan or become a guarantor.',
     lr_elig_6: 'A person from outside Shaharpura/Gardih cannot take the loan or become a guarantor.',
+    lr_principle_h: 'How older loans are judged',
+    lr_principle_p:
+      'Every loan is judged by the rules of the year it was given. A later rule is not applied to an older loan as a violation.',
+    lr_bid_note:
+      'This is an interest-rate bidding process: applicants compete by offering the monthly interest rate they are willing to pay.',
+    lr_tie:
+      'If more than one applicant offers the same highest rate, the loan goes to the one who first provides 3 valid guarantors.',
+    lr_int_h:
+      'How interest is calculated',
+    lr_int_1:
+      'Interest is simple monthly interest: **principal × monthly rate × number of months**.',
+    lr_int_ex:
+      'Example: ₹10,000 at 2% per month for 11 months = ₹10,000 × 2% × 11 = ₹2,200 interest, so ₹12,200 in total.',
+    lr_t_h:
+      'Timeline at a glance',
+    lr_t_three:
+      '3 guarantors are required',
+    lr_t_committee:
+      'Committee members cannot be guarantors',
+    lr_t_int10:
+      'Minimum interest period: 10 months',
+    lr_t_int11:
+      'Minimum interest period: 11 months',
+    lr_t_wa:
+      'Guarantor consent in the WhatsApp group',
+    lr_t_portal:
+      'Guarantor consent on the portal',
+    lr_t_arghya:
+      'Guarantors pay by the morning Arghya of Chhath',
+    lr_t_year_col:
+      'Year',
+    lr_t_change_col:
+      'What changed',
     lr_steps_h: 'How the loan is given',
     lr_step1: 'The committee announces the amount available for lending, the minimum bid rate, and the last date for submitting bids.',
-    lr_step2: 'The person offering the highest monthly interest rate gets the loan.',
+    lr_step2:
+      'Bids are placed in the committee WhatsApp group before the announced last date. The person offering the highest monthly interest rate gets the loan.',
     lr_step3: 'The winner provides the names of 3 guarantors.',
     lr_step4: 'Each guarantor gives consent:',
     lr_step4_a: 'Until {whatsapp_until}: in the committee WhatsApp group.',
@@ -350,18 +401,22 @@ export const T: Record<Lang, Dict> = {
     lr_n25_h: 'Conditions in the 2025 notice',
     lr_n25_1: 'The minimum bid is 1% per month.',
     lr_n25_2: 'The loan is given to the person offering the highest monthly interest rate.',
-    lr_n25_3: 'At least 3 guarantors are required. No exemption is allowed under this rule.',
+    lr_n25_3:
+      'At least **3 guarantors** are required. No exemption is allowed under this rule.',
     lr_n25_4: 'A guarantor cannot be a family member of the applicant.',
     lr_n25_5: 'A committee member cannot be a guarantor.',
-    lr_n25_6: 'Interest is charged for 11 months at the winning monthly rate.',
+    lr_n25_6:
+      'Interest is charged for **11 months** at the winning monthly rate.',
     lr_n25_7: 'The principal and the full 11 months’ interest must be repaid by the day after Diwali in the following year.',
     lr_pay_h: 'Repayment and guarantor responsibility',
-    lr_pay_1: 'Under the loan agreement used from {portal_from}, there is a minimum interest period.',
-    lr_pay_2: 'This means that even if the borrower returns the principal early, the interest for the full minimum period still has to be paid.',
-    lr_pay_3: 'The agreement also has a final repayment date.',
-    lr_pay_4: 'If the loan is not repaid by that date, the guarantors’ responsibility starts according to the agreement.',
-    lr_pay_5:
-      'If the amount is still unpaid by the morning of Chhath morning Arghya, the 3 guarantors are responsible for paying the committee’s pending amount as agreed in the loan agreement. This includes at least the principal and the minimum interest.',
+    lr_pay_1:
+      'The borrower must repay the principal and the full interest by the final repayment date, which is **the day after Diwali** of the year after the loan was given. There is no fixed calendar date: for example, money taken from the 2025 leftover is due the day after Diwali in 2026.',
+    lr_pay_2:
+      'The minimum interest period is **11 months** (10 months until {interest_until}). Even if the borrower repays earlier, interest for the full period must be paid.',
+    lr_pay_3:
+      'If the borrower does not repay, the 3 guarantors must pay **the principal plus the full interest (11 months)**, in equal shares, one third each. From {arghya_from}, the guarantors must pay by the morning Arghya of Chhath, in any case.',
+    lr_contact_p:
+      'Questions about a loan? Email the committee at {email}.',
     lr_about_h: 'About this page',
     lr_about_1: 'This page is a simple summary based on the committee’s notices and loan documents.',
     lr_about_2:
@@ -697,22 +752,26 @@ export const T: Record<Lang, Dict> = {
       'योगदान और समिति की प्रविष्टियों में व्यक्ति का नाम, गाँव, पिता का नाम और फ़ोटो हो सकता है, और समिति सदस्यों के लिए मोबाइल नंबर भी। ऋण records में उधार लेने वाले और गारंटरों के नाम दिखते हैं। समिति इन्हें केवल सामुदायिक पारदर्शिता के लिए प्रकाशित करती है। अगर आप नहीं चाहते कि आपकी कोई जानकारी दिखे, या कोई जानकारी ग़लत है, तो समिति को {email} पर ईमेल कीजिए — उसे सुधारा जाएगा। हटाने का अनुरोध करने पर आपका योगदान “गुमनाम” के रूप में दिखाया जाएगा। ऋण के रिकॉर्ड सुधारे जा सकते हैं, पर गुमनाम नहीं किए जा सकते।',
     privacy_cookies_h: 'Analytics और cookies',
     privacy_cookies_p:
-      'Analytics डिफ़ॉल्ट रूप से बंद रहते हैं। केवल जब आप “स्वीकार करें” दबाते हैं, तभी पोर्टल Google Tag Manager लोड करता है, जिसके अंदर Google Analytics (visits की गिनती) और Microsoft Clarity (पेज कैसे इस्तेमाल होते हैं, जैसे tap और scroll) चलते हैं। ये _ga और _clck जैसी cookies लगाते हैं और आपका IP address पाते हैं। “मना करें” चुनने पर इनमें से कुछ भी लोड नहीं होता, और आप कभी भी footer में “Cookie सेटिंग” से अपनी पसंद बदल सकते हैं। इस पोर्टल पर और कुछ भी cookies इस्तेमाल नहीं करता।',
+      'Analytics डिफ़ॉल्ट रूप से बंद रहते हैं। केवल जब आप “स्वीकार करें” दबाते हैं, तभी पोर्टल Google Tag Manager लोड करता है, जिसके अंदर Google Analytics (visits की गिनती) और Microsoft Clarity (पेज कैसे इस्तेमाल होते हैं: click, tap, scroll और दूसरी गतिविधियाँ; संवेदनशील सामग्री Microsoft के बताए अनुसार छिपाई जाती है) चलते हैं। ये _ga और _clck जैसी cookies लगाते हैं। हर वेबसाइट की तरह, हर request के साथ आपका IP address उनके सर्वर तक पहुँचता है: Google के अनुसार Google Analytics अलग-अलग IP address को लॉग या स्टोर नहीं करता, और Clarity IP address से आपकी अनुमानित जगह का पता लगाता है। “मना करें” चुनने पर इनमें से कुछ भी लोड नहीं होता, और आप कभी भी footer में “Cookie सेटिंग” से अपनी पसंद बदल सकते हैं। यहाँ बताई गई सेवाओं के अलावा, पोर्टल जानबूझकर कोई और ट्रैकिंग cookies इस्तेमाल नहीं करता।',
     privacy_push_h: 'सूचनाएँ (नोटिफिकेशन)',
     privacy_push_p:
-      'अगर आप सूचनाएँ चालू करते हैं, तो आपका ब्राउज़र हमें उन्हें भेजने का एक पता देता है। वह आपके ब्राउज़र की पहचान है, आपकी नहीं: कोई नाम, मोबाइल या ईमेल नहीं। मेन्यू से कभी भी बंद कर सकते हैं, फिर वह पता इस्तेमाल नहीं होगा। मिली हुई सूचनाएँ सिर्फ़ इसी डिवाइस पर रहती हैं, अधिकतम 50, और साइट डेटा हटाने पर मिट जाती हैं।',
+      'अगर आप सूचनाएँ चालू करते हैं, तो आपका ब्राउज़र हमें उन्हें भेजने का एक पता देता है। वह आपके ब्राउज़र की पहचान है, आपकी नहीं: कोई नाम, मोबाइल या ईमेल नहीं। मेन्यू से कभी भी बंद कर सकते हैं: तब आपका ब्राउज़र वह पता रद्द कर देता है, और सहेजी हुई प्रति अगली बार भेजने में विफल होते ही बंद कर दी जाती है। मिली हुई सूचनाएँ सिर्फ़ इसी डिवाइस पर रहती हैं, अधिकतम 50, और साइट डेटा हटाने पर मिट जाती हैं।',
     privacy_offline_h: 'आपके डिवाइस पर क्या रखा जाता है',
     privacy_offline_p:
       'पोर्टल जल्दी खुले और बिना इंटरनेट भी चले, इसके लिए आपका ब्राउज़र पेजों और आख़िरी आँकड़ों की एक नक़ल रखता है, साथ में छोटी सेटिंग्स जैसे आपकी चुनी हुई थीम और भाषा, और कौन-सी सूचना आप देख चुके हैं। यह सब आपके डिवाइस पर ही है। ब्राउज़र में साइट डेटा हटाने से सब मिट जाता है।',
     privacy_thirdparty_h: 'और कौन शामिल है',
     privacy_thirdparty_p:
-      'फ़ॉन्ट अब पोर्टल से ही दिए जाते हैं, इसलिए फ़ॉन्ट के लिए Google को आपकी जानकारी नहीं मिलती। बाहरी सेवाएँ केवल Google Analytics और Microsoft Clarity हैं, और वे भी तभी जब आप analytics cookies स्वीकार करें। साइट hosting और network प्रदाताओं (Vercel और Cloudflare) के ज़रिए पहुँचती है, जो किसी भी host की तरह पेज देने के लिए आपका IP address और request की जानकारी देखते हैं। डेटा खुद समिति के अपने servers से आता है।',
+      'फ़ॉन्ट पोर्टल से ही दिए जाते हैं, इसलिए फ़ॉन्ट के लिए Google को आपकी जानकारी नहीं मिलती। बाहरी सेवाएँ केवल Google Analytics और Microsoft Clarity हैं, और वे भी तभी जब आप analytics cookies स्वीकार करें। साइट hosting और network प्रदाताओं (Vercel और Cloudflare) के ज़रिए पहुँचती है, जो किसी भी host की तरह पेज देने के लिए आपका IP address और request की जानकारी देखते हैं। डेटा खुद समिति के अपने servers से आता है।',
+    privacy_security_h:
+      'सुरक्षा',
+    privacy_security_p:
+      'सार्वजनिक API केवल प्रकाशित records देता है। ग़लती की रिपोर्ट और सूचना के साइन-अप के अलावा उसमें कुछ लिखा नहीं जा सकता, और उसके अनुरोधों की दर सीमित रखी जाती है।',
     privacy_retention_h: 'कुछ भी कितने समय रखा जाता है',
     privacy_retention_p:
-      'प्रकाशित रिकॉर्ड — चंदा, ख़र्च, ऋण, समिति की सूची — समिति के स्थायी हिसाब के रूप में रखे जाते हैं, क्योंकि उन्हें प्रकाशित करने का मक़सद ही यही है। तकनीकी चीज़ें कम समय की हैं: ग़लती की रिपोर्टें अपने आप हटती रहती हैं, और सूचना का पता तभी तक रहता है जब तक वह काम करता है या आप सूचनाएँ बंद नहीं करते। अगर आप analytics स्वीकार करते हैं, तो Google और Microsoft जो डेटा इकट्ठा करते हैं वह उनकी अपनी नीतियों के अनुसार रखा जाता है।',
+      'प्रकाशित रिकॉर्ड — चंदा, ख़र्च, ऋण, समिति की सूची — समिति के स्थायी हिसाब के रूप में रखे जाते हैं, क्योंकि उन्हें प्रकाशित करने का मक़सद ही यही है। तकनीकी डेटा कम समय के लिए ही रखा जाता है। ग़लती की रिपोर्टें 180 दिन बाद अपने आप हट जाती हैं; रिपोर्ट में आपका IP address नहीं रखा जाता, केवल एक बिगाड़ा हुआ विज़िटर कोड रखा जाता है, जो ऐसी चाबी से बनता है जो दो दिन बाद फेंक दी जाती है, और उसके बाद वह कोड किसी address से जोड़ा नहीं जा सकता। जो सूचना का पता काम करना बंद कर दे, जैसे आपने सूचनाएँ बंद कर दीं, वह अगली बार भेजने में विफल होने पर बंद कर दिया जाता है और उसके 90 दिन बाद अपने आप हटा दिया जाता है। अगर आप analytics स्वीकार करते हैं, तो Google और Microsoft जो डेटा इकट्ठा करते हैं वह उनकी अपनी नीतियों के अनुसार रखा जाता है।',
     privacy_rights_h: 'सुधार और हटाना',
     privacy_rights_p:
-      'अगर आपके बारे में प्रकाशित कोई जानकारी ग़लत है, तो समिति को {email} पर ईमेल करके सुधार का अनुरोध करें; समिति अपना रजिस्टर ठीक करेगी और पोर्टल पर वह बदल जाएगा। अगर आप अपनी जानकारी नहीं दिखाना चाहते, तो हटाने का अनुरोध करें: आपका योगदान “गुमनाम” में कर दिया जाएगा। आपका नाम, गाँव, पिता का नाम और फ़ोटो नहीं दिखेंगे, पर राशि कुल योग और योगदानकर्ताओं की गिनती में गिनी जाती रहेगी, ताकि हिसाब पूरा रहे। यह आपके चालू वर्ष और पिछले सभी वर्षों के योगदान पर लागू होता है। यह स्थायी है: एक बार किसी को गुमनाम (Anonymous) कर दिया जाए तो समिति उसे दोबारा नाम के साथ नहीं दिखाएगी। आगे के वर्षों में भी गुमनाम रहना चाहें तो योगदान देते समय समिति को बता दें। ऋण के रिकॉर्ड (उधार लेने वाले और गारंटर) अलग हैं: नाम ग़लत हो तो सुधारा जा सकता है, पर ऋण के रिकॉर्ड को गुमनाम नहीं किया जा सकता।',
+      'अगर आपके बारे में प्रकाशित कोई जानकारी ग़लत है, तो समिति को {email} पर ईमेल करके सुधार का अनुरोध करें; समिति अपना रजिस्टर ठीक करेगी और पोर्टल पर वह बदल जाएगा। अगर आप अपनी जानकारी नहीं दिखाना चाहते, तो हटाने का अनुरोध करें: आपका योगदान “गुमनाम” में कर दिया जाएगा। आपका नाम, गाँव, पिता का नाम और फ़ोटो नहीं दिखेंगे, पर राशि कुल योग और योगदानकर्ताओं की गिनती में गिनी जाती रहेगी, ताकि हिसाब पूरा रहे। यह आपके चालू वर्ष और पिछले सभी वर्षों के योगदान पर लागू होता है। यह स्थायी है: एक बार किसी को गुमनाम (Anonymous) कर दिया जाए तो समिति उसे दोबारा नाम के साथ नहीं दिखाएगी। आगे के वर्षों में भी गुमनाम रहना चाहें तो योगदान देते समय समिति को बता दें। ऋण के रिकॉर्ड (उधार लेने वाले और गारंटर) अलग हैं: नाम ग़लत हो तो सुधारा जा सकता है, पर ऋण के रिकॉर्ड को गुमनाम नहीं किया जा सकता, क्योंकि ऋण एक वित्तीय ज़िम्मेदारी है और उसे चुकाने के लिए ज़िम्मेदार लोगों की पहचान वसूली और हिसाब के लिए बनी रहनी चाहिए। समिति सुधार या हटाने के अनुरोध पर 7 से 30 दिनों के भीतर कार्रवाई करेगी।',
     privacy_contact_p:
       'अपने record में सुधार, हटवाने या किसी प्रश्न के लिए कृपया समिति को {email} पर ईमेल करें।',
     terms_subtitle: 'उपयोग की शर्तें',
@@ -720,7 +779,7 @@ export const T: Record<Lang, Dict> = {
       'यह साइट {org_name} द्वारा सामुदायिक पारदर्शिता के लिए उपलब्ध कराई गई है। जानकारी सद्भावना के साथ प्रस्तुत की गई है और समिति के records से ली गई है।',
     terms_use_h: 'जानकारी का उपयोग',
     terms_use_p:
-      'Records सूचना और सत्यापन के उद्देश्यों के लिए हैं। यद्यपि समिति सटीकता के लिए प्रयासरत रहती है, records को अंतिम रूप देने के साथ आँकड़े अद्यतन किए जा सकते हैं। सजीव (live) वित्तीय आँकड़े प्रकाशित data से गणना किए जाते हैं।',
+      'Records सूचना और सत्यापन के उद्देश्यों के लिए हैं। यद्यपि समिति सटीकता के लिए प्रयासरत रहती है, records को अंतिम रूप देने के साथ आँकड़े अद्यतन किए जा सकते हैं। सजीव (live) वित्तीय आँकड़े प्रकाशित data से गणना किए जाते हैं। किसी आँकड़े के आधार पर कोई निर्णय लेने से पहले कृपया समिति के सदस्यों से उसकी पुष्टि कर लें।',
     terms_docs_h: 'दस्तावेज़',
     terms_docs_p:
       'डाउनलोड करने योग्य रसीदें और प्रमाणपत्र समिति द्वारा तैयार किए जाते हैं। यदि कोई document \u201cNot Available\u201d दिखता है, तो उसे उस record के लिए अभी प्रकाशित नहीं किया गया है।',
@@ -738,13 +797,26 @@ export const T: Record<Lang, Dict> = {
     privacy_cookie_change: 'Cookie पसंद बदलें',
     privacy_see_terms: 'उपयोग की शर्तें पढ़ें',
     terms_see_privacy: 'गोपनीयता नीति पढ़ें',
+    policy_dates:
+      'अंतिम अद्यतन: {updated}',
+    terms_misuse_h: 'उचित उपयोग',
+    terms_misuse_p:
+      'कृपया पोर्टल और उसके records का दुरुपयोग न करें। उन्हें बदलें या ग़लत तरीके से प्रस्तुत न करें, समिति या किसी और का रूप न धरें, पोर्टल से ऐसे तरीके से डेटा न खींचें जिससे उस पर बोझ पड़े, और उसे बाधित करने की कोशिश न करें।',
+    terms_contact_h: 'संपर्क',
+    terms_contact_p: 'इन शर्तों के बारे में प्रश्न के लिए, या किसी record में ग़लती बताने के लिए कृपया समिति को {email} पर ईमेल करें।',
+    terms_law_h:
+      'लागू कानून और क्षेत्राधिकार',
+    terms_law_p:
+      'ये शर्तें भारत के कानूनों के अनुसार चलेंगी। इस पोर्टल के उपयोग से जुड़े किसी भी विवाद पर केवल गिरिडीह (झारखंड) के न्यायालयों का क्षेत्राधिकार होगा।',
     terms_donations_h: 'दान',
     terms_donations_p:
-      'दान स्वैच्छिक है। Donate पेज पर दिए गए भुगतान विवरण समिति द्वारा प्रकाशित हैं; संदेह होने पर भुगतान से पहले समिति से पुष्टि कर लें। एक बार योगदान दे देने के बाद कोई रिफ़ंड नीति नहीं है और कोई रिफ़ंड नहीं किया जाएगा, इसलिए भुगतान से पहले विवरण ज़रूर जाँच लें। रिकॉर्ड में कोई जानकारी ग़लत दिखे तो सुधार के लिए समिति से संपर्क करें। अगर आप चाहते हैं कि आपका योगदान गुमनाम (Anonymous) दिखे, तो योगदान देते समय समिति को बता दें (गोपनीयता पेज देखें)।',
+      'दान स्वैच्छिक है। Donate पेज पर दिए गए भुगतान विवरण समिति द्वारा प्रकाशित हैं; संदेह होने पर भुगतान से पहले समिति से पुष्टि कर लें। एक बार योगदान दे देने के बाद कोई रिफ़ंड नीति नहीं है और **कोई रिफ़ंड नहीं किया जाएगा**, इसलिए भुगतान से पहले विवरण ज़रूर जाँच लें। रिकॉर्ड में कोई जानकारी ग़लत दिखे तो सुधार के लिए समिति से संपर्क करें। अगर आप चाहते हैं कि आपका योगदान गुमनाम (Anonymous) दिखे, तो योगदान देते समय समिति को बता दें (गोपनीयता पेज देखें)।',
     nav_home: 'होम',
     nav_expenses: 'व्यय',
     nav_loans: 'ऋण',
     nav_committee: 'समिति',
+    contact_committee_link:
+      'समिति सदस्यों के संपर्क विवरण',
     nav_downloads: 'डाउनलोड',
     nav_more: 'मेन्यू',
     skip_to_content: 'सीधे मुख्य सामग्री पर जाएँ',
@@ -867,15 +939,49 @@ export const T: Record<Lang, Dict> = {
     lr_intro_2:
       'इस पेज पर बताया गया है कि ऋण कैसे दिया जाता है, ऋण कौन ले सकता है, कौन गारंटर बन सकता है और हर नियम कब से लागू है। हर ऋण को उसी वर्ष के नियमों के अनुसार देखा जाता है, जिस वर्ष वह दिया गया था।',
     lr_elig_h: 'ऋण कौन ले सकता है और कौन गारंटर बन सकता है',
-    lr_elig_1: 'ऋण लेने वाला (Borrower/Loaner) केवल शहरपुरा या गरडीह का होना चाहिए।',
+    lr_elig_1: 'ऋण लेने वाला (Borrower) केवल शहरपुरा या गरडीह का होना चाहिए।',
     lr_elig_2: 'ऋण लेने वाले का नाम उस वर्ष की Contribution List में होना जरूरी है।',
     lr_elig_3: 'सभी 3 गारंटर भी केवल शहरपुरा या गरडीह के होने चाहिए।',
     lr_elig_4: 'हर गारंटर का नाम भी उसी वर्ष की Contribution List में होना जरूरी है।',
     lr_elig_5: 'Anonymous Contributor के रूप में दर्ज व्यक्ति ऋण नहीं ले सकता और न ही गारंटर बन सकता है।',
     lr_elig_6: 'शहरपुरा/गरडीह के बाहर का कोई व्यक्ति ऋण नहीं ले सकता और न ही गारंटर बन सकता है।',
+    lr_principle_h: 'पुराने ऋणों को कैसे देखा जाता है',
+    lr_principle_p:
+      'हर ऋण को उसी वर्ष के नियमों से देखा जाता है जिस वर्ष वह दिया गया। बाद में लागू हुआ कोई नियम पुराने ऋण पर उल्लंघन के रूप में लागू नहीं किया जाता।',
+    lr_bid_note:
+      'यह ब्याज दर की बोली की प्रक्रिया है: आवेदक अपनी पसंद की मासिक ब्याज दर बोलकर आपस में प्रतिस्पर्धा करते हैं।',
+    lr_tie:
+      'अगर एक से अधिक आवेदक एक ही सबसे ऊँची दर की बोली लगाते हैं, तो ऋण उसे मिलता है जो सबसे पहले 3 मान्य गारंटर उपलब्ध कराता है।',
+    lr_int_h:
+      'ब्याज की गणना कैसे होती है',
+    lr_int_1:
+      'ब्याज साधारण (simple) मासिक ब्याज है: **मूलधन × मासिक दर × महीनों की संख्या**।',
+    lr_int_ex:
+      'उदाहरण: ₹10,000 पर 2% प्रति माह की दर से 11 महीने = ₹10,000 × 2% × 11 = ₹2,200 ब्याज, यानी कुल ₹12,200।',
+    lr_t_h:
+      'एक नज़र में समय-रेखा',
+    lr_t_three:
+      '3 गारंटर ज़रूरी',
+    lr_t_committee:
+      'समिति सदस्य गारंटर नहीं बन सकते',
+    lr_t_int10:
+      'न्यूनतम ब्याज अवधि: 10 महीने',
+    lr_t_int11:
+      'न्यूनतम ब्याज अवधि: 11 महीने',
+    lr_t_wa:
+      'गारंटर की सहमति WhatsApp ग्रुप में',
+    lr_t_portal:
+      'गारंटर की सहमति पोर्टल पर',
+    lr_t_arghya:
+      'गारंटर छठ के सुबह के अर्घ्य तक भुगतान करते हैं',
+    lr_t_year_col:
+      'वर्ष',
+    lr_t_change_col:
+      'क्या बदला',
     lr_steps_h: 'ऋण कैसे दिया जाता है',
     lr_step1: 'समिति ऋण के लिए उपलब्ध राशि, न्यूनतम बोली दर और बोली जमा करने की अंतिम तारीख की सूचना देती है।',
-    lr_step2: 'सबसे अधिक मासिक ब्याज दर की बोली लगाने वाले व्यक्ति को ऋण मिलता है।',
+    lr_step2:
+      'बोली समिति के WhatsApp ग्रुप में घोषित अंतिम तारीख से पहले लगाई जाती है। सबसे अधिक मासिक ब्याज दर की बोली लगाने वाले व्यक्ति को ऋण मिलता है।',
     lr_step3: 'विजेता 3 गारंटरों के नाम देता है।',
     lr_step4: 'प्रत्येक गारंटर अपनी सहमति देता है:',
     lr_step4_a: '{whatsapp_until} तक: समिति के WhatsApp ग्रुप में।',
@@ -903,18 +1009,22 @@ export const T: Record<Lang, Dict> = {
     lr_n25_h: '2025 की सूचना में दी गई शर्तें',
     lr_n25_1: 'न्यूनतम बोली 1% प्रति माह है।',
     lr_n25_2: 'सबसे अधिक मासिक ब्याज दर की बोली लगाने वाले व्यक्ति को ऋण दिया जाता है।',
-    lr_n25_3: 'कम से कम 3 गारंटर जरूरी हैं। इस नियम में कोई छूट नहीं है।',
+    lr_n25_3:
+      'कम से कम **3 गारंटर** जरूरी हैं। इस नियम में कोई छूट नहीं है।',
     lr_n25_4: 'गारंटर आवेदक के परिवार का सदस्य नहीं हो सकता।',
     lr_n25_5: 'समिति का कोई सदस्य गारंटर नहीं बन सकता।',
-    lr_n25_6: 'जीतने वाली मासिक ब्याज दर के अनुसार 11 महीने का ब्याज लिया जाता है।',
+    lr_n25_6:
+      'जीतने वाली मासिक ब्याज दर के अनुसार **11 महीने** का ब्याज लिया जाता है।',
     lr_n25_7: 'मूलधन और 11 महीने का पूरा ब्याज अगले वर्ष दीपावली के अगले दिन तक वापस करना होता है।',
     lr_pay_h: 'भुगतान और गारंटर की जिम्मेदारी',
-    lr_pay_1: '{portal_from} से उपयोग किए जा रहे ऋण समझौते में एक न्यूनतम ब्याज अवधि होती है।',
-    lr_pay_2: 'इसका मतलब है कि अगर ऋण लेने वाला मूलधन समय से पहले वापस कर देता है, तब भी न्यूनतम अवधि का पूरा ब्याज देना होगा।',
-    lr_pay_3: 'समझौते में एक अंतिम भुगतान तारीख भी होती है।',
-    lr_pay_4: 'अगर उस तारीख तक ऋण वापस नहीं किया जाता है, तो समझौते के अनुसार गारंटरों की जिम्मेदारी शुरू होती है।',
-    lr_pay_5:
-      'अगर छठ के सुबह के अर्घ्य तक भी राशि वापस नहीं की जाती है, तो तीनों गारंटर समझौते के अनुसार समिति की बाकी राशि देने के लिए जिम्मेदार होंगे। इसमें कम से कम मूलधन और न्यूनतम ब्याज शामिल होगा।',
+    lr_pay_1:
+      'ऋण लेने वाले को मूलधन और पूरा ब्याज अंतिम भुगतान तारीख तक लौटाना होता है, जो ऋण दिए जाने के अगले वर्ष की **दीपावली का अगला दिन** है। कोई निश्चित कैलेंडर तारीख नहीं है: जैसे 2025 की बची हुई राशि लेने वाले को 2026 की दीपावली के अगले दिन तक लौटाना है।',
+    lr_pay_2:
+      'न्यूनतम ब्याज अवधि **11 महीने** है ({interest_until} तक यह 10 महीने थी)। ऋण लेने वाला पहले भुगतान कर दे, तब भी पूरी अवधि का ब्याज देना होगा।',
+    lr_pay_3:
+      'अगर ऋण लेने वाला नहीं चुकाता, तो तीनों गारंटरों को **मूलधन और पूरा ब्याज (11 महीने)** बराबर हिस्सों में, एक-तिहाई-एक-तिहाई, देना होगा। {arghya_from} से गारंटरों को हर हाल में छठ के सुबह के अर्घ्य तक भुगतान करना होगा।',
+    lr_contact_p:
+      'ऋण के बारे में कोई प्रश्न हो तो समिति को {email} पर ईमेल करें।',
     lr_about_h: 'इस पेज के बारे में',
     lr_about_1: 'यह पेज समिति की सूचनाओं और ऋण से जुड़े दस्तावेज़ों के आधार पर बनाया गया एक आसान सारांश है।',
     lr_about_2:

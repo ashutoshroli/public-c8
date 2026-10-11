@@ -24,3 +24,19 @@ export function committeeGuarantorBanned(loanYear: number | null | undefined): b
   if (loanYear === null || loanYear === undefined || !Number.isFinite(loanYear)) return true;
   return loanYear >= COMMITTEE_GUARANTOR_BAN_FROM_YEAR;
 }
+
+/** Minimum interest period: 10 months until 2024, 11 months from 2025. */
+export const INTEREST_10_MONTHS_UNTIL_YEAR = 2024;
+export const INTEREST_11_MONTHS_FROM_YEAR = INTEREST_10_MONTHS_UNTIL_YEAR + 1;
+export const MIN_INTEREST_MONTHS_NOW = 11;
+export function minInterestMonths(loanYear: number): number {
+  return loanYear <= INTEREST_10_MONTHS_UNTIL_YEAR ? 10 : MIN_INTEREST_MONTHS_NOW;
+}
+
+/** From 2026 the guarantors must pay by the morning Arghya of Chhath, in any case. */
+export const GUARANTOR_ARGHYA_FROM_YEAR = 2026;
+
+/** Simple monthly interest: principal × monthly rate (in %) × months. */
+export function simpleInterest(principal: number, monthlyRatePct: number, months: number): number {
+  return Math.round(principal * (monthlyRatePct / 100) * months * 100) / 100;
+}

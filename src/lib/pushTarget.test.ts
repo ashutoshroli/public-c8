@@ -149,7 +149,7 @@ describe('PR-44: the two copies of the resolver cannot drift', () => {
 describe('PR-44: the privacy notice covers what the portal actually does', () => {
   const i18n = readFileSync(resolve(process.cwd(), 'src/lib/i18n.ts'), 'utf8');
   const page = readFileSync(resolve(process.cwd(), 'src/routes/privacy/+page.svelte'), 'utf8');
-  const SECTIONS = ['published', 'cookies', 'push', 'offline', 'thirdparty', 'retention', 'rights'];
+  const SECTIONS = ['published', 'cookies', 'push', 'offline', 'thirdparty', 'security', 'retention', 'rights'];
 
   it('every new section exists in BOTH languages', () => {
     for (const s of SECTIONS) {

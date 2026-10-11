@@ -93,9 +93,11 @@ describe('/loan-rules page copy', () => {
     'lr_from_least', 'lr_until', 'lr_r_three', 'lr_n_three', 'lr_r_committee', 'lr_n_committee_1',
     'lr_n_committee_2', 'lr_r_whatsapp', 'lr_n_whatsapp', 'lr_r_portal', 'lr_n_portal_1', 'lr_n_portal_2',
     'lr_n_portal_3', 'lr_n25_h', 'lr_n25_1', 'lr_n25_2', 'lr_n25_3', 'lr_n25_4', 'lr_n25_5', 'lr_n25_6',
-    'lr_n25_7', 'lr_pay_h', 'lr_pay_1', 'lr_pay_2', 'lr_pay_3', 'lr_pay_4', 'lr_pay_5', 'lr_about_h',
-    'lr_about_1', 'lr_about_2', 'lr_about_3', 'lr_back_loans', 'loan_rules_link', 'footer_loan_rules',
-    'allowed_at_the_time', 'lr_old_loan_note'
+    'lr_n25_7', 'lr_pay_h', 'lr_pay_1', 'lr_pay_2', 'lr_pay_3', 'lr_about_h', 'lr_about_1', 'lr_about_2',
+    'lr_about_3', 'lr_back_loans', 'loan_rules_link', 'footer_loan_rules', 'allowed_at_the_time',
+    'lr_old_loan_note', 'lr_tie', 'lr_int_h', 'lr_int_1', 'lr_int_ex', 'lr_t_h', 'lr_t_three',
+    'lr_t_committee', 'lr_t_int10', 'lr_t_int11', 'lr_t_wa', 'lr_t_portal', 'lr_t_arghya', 'lr_t_year_col',
+    'lr_t_change_col', 'lr_contact_p', 'contact_committee_link'
   ];
   it('every key exists in English and Hindi and Hindi is really translated', () => {
     for (const k of keys) {
@@ -115,16 +117,16 @@ describe('/loan-rules page copy', () => {
     };
     expect(t('en', 'lr_step4_a', vars)).toContain('2025');
     expect(t('en', 'lr_step4_b', vars)).toContain('2026');
-    expect(t('hi', 'lr_pay_1', vars)).toContain('2026');
+    expect(t('hi', 'lr_pay_3', { ...vars, arghya_from: 2026 })).toContain('2026');
     expect(t('hi', 'lr_n_committee_2', vars)).toContain('2023');
     // the only fixed year in the copy is the 2025 notice itself
-    for (const k of ['lr_step4_a', 'lr_step4_b', 'lr_pay_1', 'lr_n_committee_2']) {
+    for (const k of ['lr_step4_a', 'lr_step4_b', 'lr_pay_2', 'lr_pay_3', 'lr_n_committee_2']) {
       expect(t('en', k), `${k} must use a {placeholder}`).not.toMatch(/\b20\d\d\b/);
       expect(t('hi', k), `${k} must use a {placeholder}`).not.toMatch(/\b20\d\d\b/);
     }
     const page = readFileSync('src/routes/loan-rules/+page.svelte', 'utf8');
     expect(page).toContain('COMMITTEE_GUARANTOR_BAN_FROM_YEAR');
-    expect(page).not.toMatch(/\b20(21|23|25|26)\b/);
+    expect(page).not.toMatch(/\b20(21|23|24|25|26)\b/);
   });
 
   it('keeps the eligibility rules: Shaharpura/Gardih only, name on that year’s contribution list, no anonymous', () => {
