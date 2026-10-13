@@ -54,7 +54,10 @@
   let tagline = $derived(journeyTagline($portalState.data));
   let taglineText = $derived(($lang === 'hi' ? tagline.hi : tagline.en) || $tr('decade_sub'));
 
-  let pct = $derived(Math.max(0, Math.min(100, fin.utilizedPct)));
+  // Expenses (green) + the loan given this year (gold) — both are money no longer available.
+  let expPct = $derived(Math.max(0, Math.min(100, fin.utilizedPct)));
+  let loanPct = $derived(Math.max(0, Math.min(100 - expPct, fin.loanPct)));
+  let pct = $derived(expPct + loanPct);
 </script>
 
 <svelte:head>
@@ -117,11 +120,24 @@
           aria-valuenow={Math.round(pct)}
           aria-label={$tr('utilized')}
         >
-          <div class="h-full rounded-full bg-brand-600" style="width: {pct}%"></div>
+          <div class="flex h-full">
+            <div class="h-full bg-brand-600" style="width: {expPct}%"></div>
+            {#if loanPct > 0}
+              <div class="h-full bg-gold" style="width: {loanPct}%"></div>
+            {/if}
+          </div>
         </div>
-        <div class="mt-2 flex justify-between text-xs text-muted">
+        <div class="mt-2 flex flex-wrap justify-between gap-x-3 gap-y-1 text-xs text-muted">
           <span>{pct.toFixed(1)}% {$tr('utilized')}</span>
-          <span class="font-semibold {fin.available < 0 ? 'text-danger' : 'text-success'}">{fmt(fin.available)} {$tr('still_available')}</span>
+          <span class="flex flex-wrap items-center gap-x-2">
+            {#if fin.loanGiven > 0}
+              <span class="inline-flex items-center gap-1 font-semibold text-warning">
+                <span class="inline-block h-2 w-2 rounded-full bg-gold" aria-hidden="true"></span>{fmt(fin.loanGiven)} {$tr('loan_given')}
+              </span>
+              <span aria-hidden="true">·</span>
+            {/if}
+            <span class="font-semibold {fin.available < 0 ? 'text-danger' : 'text-success'}">{fmt(fin.available)} {$tr('still_available')}</span>
+          </span>
         </div>
 
         <dl class="mt-5 divide-y divide-line border-t border-line text-sm">

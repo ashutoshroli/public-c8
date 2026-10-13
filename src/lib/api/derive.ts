@@ -77,6 +77,11 @@ export function loansForYear(data: PortalData, sel: YearSel): LoanRow[] {
   return rows.filter((l) => yint(l.Year) === sel);
 }
 
+/** True once the committee has marked the loan Repaid in the management portal. */
+export function isRepaidLoan(l: LoanRow): boolean {
+  return String(l.Status ?? '').trim().toLowerCase() === 'repaid';
+}
+
 /** Simple per-month interest for one loan row (matches source formula). */
 export function loanTotalWithInterest(l: LoanRow): {
   principal: number;
@@ -97,25 +102,35 @@ export interface Financials {
   totalBudget: number;
   totalExpense: number;
   netSurplus: number;
-  /** derived: 0..100, clamped */
+  /** derived: expenses as % of budget, 0..100, clamped */
   utilizedPct: number;
-  /** derived: budget - expense (same as netSurplus, exposed for the UI label) */
+  /** principal of the loans given in the selected year (any status) */
+  loanGiven: number;
+  /** derived: loanGiven as % of budget, clamped so expenses + loans never exceed 100 */
+  loanPct: number;
+  /** derived: budget - expense - loan given (what is really still unspent) */
   available: number;
 }
 
 export function computeFinancials(data: PortalData, sel: YearSel): Financials {
   const collection = collectionsForYear(data, sel).reduce((s, c) => s + parseAmt(c.Amount), 0);
 
-  // Past Loan Returned: per-year uses the PREVIOUS year's loans; All uses all.
-  const prevLoans = isAll(sel)
-    ? data.loans || []
-    : (data.loans || []).filter((l) => yint(l.Year) === sel - 1);
+  // Past Loan Returned: per-year uses the PREVIOUS year's loans; All uses all — and only
+  // loans marked Repaid. Money that has not come back is not budget (same rule as mgmt).
+  const repaid = (data.loans || []).filter(isRepaidLoan);
+  const prevLoans = isAll(sel) ? repaid : repaid.filter((l) => yint(l.Year) === sel - 1);
   const pastLoanReturned = prevLoans.reduce((s, l) => s + loanTotalWithInterest(l).total, 0);
 
   const totalBudget = collection + pastLoanReturned;
   const totalExpense = expensesForYear(data, sel).reduce((s, e) => s + parseAmt(e.Amount), 0);
   const netSurplus = totalBudget - totalExpense;
   const utilizedPct = totalBudget > 0 ? Math.min(100, Math.max(0, (totalExpense / totalBudget) * 100)) : 0;
+  // The surplus left after expenses is lent out in the same year, so a loan given this
+  // year is NOT "still available". Counted at principal, whatever its status.
+  const loanGiven = loansForYear(data, sel).reduce((s, l) => s + parseAmt(l.Amount), 0);
+  const loanPct = totalBudget > 0
+    ? Math.min(100 - utilizedPct, Math.max(0, (loanGiven / totalBudget) * 100))
+    : 0;
 
   return {
     sel,
@@ -125,7 +140,9 @@ export function computeFinancials(data: PortalData, sel: YearSel): Financials {
     totalExpense,
     netSurplus,
     utilizedPct,
-    available: netSurplus
+    loanGiven,
+    loanPct,
+    available: netSurplus - loanGiven
   };
 }
 
@@ -600,6 +617,8 @@ export interface LoanItem {
   tenure: number;
   year: string;
   seed: string;
+  /** marked Repaid in the management portal */
+  repaid: boolean;
   guarantors: GuarantorItem[];
 }
 
@@ -674,6 +693,7 @@ export function loanItems(
       tenure: parseAmt(l.Tenure),
       year: (l.Year ?? '').toString(),
       seed: receiverId || (l.Name ?? '').toString(),
+      repaid: isRepaidLoan(l),
       guarantors: guarantorsForLoan(data, loanId, loanYear, receiverId, userMap)
     };
   });

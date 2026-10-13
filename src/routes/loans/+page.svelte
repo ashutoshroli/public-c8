@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ShieldCheck, ShieldAlert, MapPin } from '@lucide/svelte';
+  import { ShieldCheck, ShieldAlert, MapPin, CircleCheck } from '@lucide/svelte';
   import PageHeading from '$lib/components/PageHeading.svelte';
   import EmptyState from '$lib/components/EmptyState.svelte';
   import ErrorState from '$lib/components/ErrorState.svelte';
@@ -61,6 +61,11 @@
             <div class="min-w-0 flex-1">
               <p class="truncate text-sm font-bold">{nameOf(l) || $tr('na')}</p>
               <p class="text-xs text-muted">{$tr('year')} {l.year}{#if l.loanId} · {l.loanId}{/if}</p>
+              {#if l.repaid}
+                <span class="mt-1 inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-bold text-success">
+                  <CircleCheck class="h-3 w-3" aria-hidden="true" />{$tr('loan_returned')}
+                </span>
+              {/if}
             </div>
             <span class="shrink-0 text-right">
               <span class="block text-base font-extrabold text-brand-700">{fmt(l.total)}</span>
