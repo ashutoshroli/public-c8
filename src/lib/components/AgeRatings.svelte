@@ -3,27 +3,9 @@
    * "Age ratings" block for the public /guide page — the IARC certificate the
    * app is published under, shown to visitors in both languages.
    *
-   * THEME-DRIVEN, and deliberately in two layers (this matters — see below):
-   *
-   *  • Accent pixels (the rating "stamp" badges, the section icons, the rating
-   *    description) read the live `--accent` token, NOT the fixed `brand-*`
-   *    ramp. So the badges recolour with the theme: marigold on Festival,
-   *    lime on Cyber Lime, trust-blue on Executive Pro, cyan on Midnight Glass.
-   *    Every one of the 18 themes resolves `--accent` (own value, or the
-   *    :root default #F27A1A for sunrise / classic-light / slate-light).
-   *
-   *  • Structure pixels (nested card borders, row dividers) use the
-   *    `black/10` pairing that the surrounding guide page already
-   *    uses for its nested install-step boxes — NOT `--surface-border`. That is
-   *    intentional: `--surface-border` is WHITE at :root, and the default light
-   *    theme (sunrise) plus warm-night never override it, so a nested border
-   *    built from that token would be invisible against the white `.surface`
-   *    card these boxes sit inside. The black/white pairing stays visible on
-   *    all 18 themes.
-   *
-   * Neutral text keeps the `slate-* /` pairing used by every
-   * skin-agnostic page (guide, privacy, terms), which reads correctly on both
-   * the light and dark theme bases.
+   * Colours: accent pixels (the rating "stamp" badges, the section icons) use the
+   * `--accent` token (brand green); nested borders and dividers use `black/10`, the
+   * same pairing the surrounding guide page uses for its nested boxes.
    *
    * Data + rating ID come from $lib/ratings — the SAME module the PWA manifest's
    * `iarc_rating_id` is generated from, so this page can never advertise a

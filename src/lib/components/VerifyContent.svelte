@@ -1,8 +1,6 @@
 <script lang="ts">
   /**
-   * Shared "Record Verification" body, used by every skin's pages/Verify.svelte
-   * so the logic stays identical across all 18 themes while each skin supplies
-   * its own card surface class.
+   * "Record Verification" page body (used by /verify).
    *
    * The QR printed on every receipt / certificate opens the portal with
    * `?record=<docType>-<year>-<ref>`; verifyRecord() checks that id against the
@@ -18,11 +16,6 @@
   import { verifyVerdict } from '$lib/api/verifyVerdict';
   import { fmt } from '$lib/utils/format';
 
-  interface Props {
-    /** The skin's card surface class (e.g. 'surface' or the festival CARD). */
-    surfaceClass?: string;
-  }
-  let { surfaceClass = 'surface' }: Props = $props();
 
   // The whole site is prerendered, and `url.searchParams` cannot be read during
   // prerender — so resolve the id on the client only ($effect never runs on the
@@ -95,16 +88,16 @@
 <div class="text-sm leading-relaxed text-ink">
   {#if verdict === 'no-id'}
     <!-- Opened without a ?record= id -->
-    <section class="{surfaceClass} p-5">
+    <section class="surface p-5">
       <p class="text-muted">{$tr('verify_no_id')}</p>
     </section>
   {:else if verdict === 'malformed'}
-    <section class="{surfaceClass} p-5">
+    <section class="surface p-5">
       <p class="text-muted">{$tr('verify_malformed')}</p>
       <p class="mt-2 break-all font-mono text-[11px] text-muted">{recordId}</p>
     </section>
   {:else if verdict === 'checking'}
-    <section class="{surfaceClass} p-5" aria-busy="true">
+    <section class="surface p-5" aria-busy="true">
       <p class="sr-only" role="status">{$tr('verify_checking')}</p>
       <div class="skeleton h-6 w-40"></div>
       <div class="skeleton mt-3 h-4 w-full"></div>
@@ -116,7 +109,7 @@
       or only a copy that may predate this document — so we say exactly that and
       offer a retry instead of a red verdict the data does not support.
     -->
-    <section class="{surfaceClass} border-l-4 border-warning p-5">
+    <section class="surface border-l-4 border-warning p-5">
       <div class="flex items-center gap-2">
         <ShieldQuestion class="h-6 w-6 shrink-0 text-amber-700" aria-hidden="true" />
         <!-- amber-700 rather than the lighter `warning` token: this is 16px bold
@@ -140,7 +133,7 @@
       </button>
     </section>
   {:else if result}
-    <section class="{surfaceClass} border-l-4 p-5 {verdict === 'verified' ? 'border-success' : 'border-danger'}">
+    <section class="surface border-l-4 p-5 {verdict === 'verified' ? 'border-success' : 'border-danger'}">
       <!-- Verdict -->
       <div class="flex items-center gap-2">
         {#if verdict === 'verified'}

@@ -7,7 +7,7 @@ import { writable, derived, get } from 'svelte/store';
 import { browser } from '$app/environment';
 import { loadPortalData, type PortalResult, type PortalSource } from '$lib/api/client';
 import { EMPTY_PORTAL_DATA, type PortalData } from '$lib/api/schema';
-import { availableYears, ALL_YEARS, type YearSel } from '$lib/api/derive';
+import { availableYears, type YearSel } from '$lib/api/derive';
 
 export type LoadStatus = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -78,7 +78,7 @@ export async function initPortal(force = false): Promise<void> {
   // Choose a sensible default year on first successful load: newest available,
   // preferring the current calendar year if it exists in the data.
   const current = get(year);
-  if (!yrs.includes(current as number) && current !== ALL_YEARS) {
+  if (!yrs.includes(current)) {
     const nowYear = new Date().getFullYear();
     year.set(yrs.includes(nowYear) ? nowYear : yrs[0]);
   }

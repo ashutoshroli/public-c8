@@ -3,18 +3,11 @@
 @tailwind utilities;
 
 @layer base {
-  /* One light palette. The --accent / --surface-* triplets are still read by a few
-     shared components (notifications, age ratings, install sheet), so they stay,
-     but they now have exactly one value. */
+  /* One light palette. --accent (brand-600 as an RGB triplet) is read by a few shared
+     components (notifications, age ratings, install sheet) as rgb(var(--accent) / a). */
   :root {
     color-scheme: light;
     --accent: 11 107 79;
-    --surface-bg: 255 255 255;
-    --surface-alpha: 1;
-    --surface-border: 227 231 227;
-    --surface-border-alpha: 1;
-    --page-from: #f6f7f5;
-    --page-to: #ffffff;
   }
 
   html,

@@ -119,9 +119,8 @@
     <p class="mt-1 text-sm leading-relaxed text-ink">{$tr('guide_bug_low_p')}</p>
   </div>
 
-  <!-- Where to read the code before/while testing. Accent-token styled (not the
-       fixed brand ramp) so it follows the active theme, and visually secondary
-       to the primary "Report a bug" action next to it. -->
+  <!-- Where to read the code before/while testing. Visually secondary to the
+       primary "Report a bug" action next to it. -->
   <p class="mt-4 text-sm leading-relaxed text-muted">{$tr('guide_bug_source_p')}</p>
 
   <div class="mt-3 flex flex-wrap items-center gap-2">

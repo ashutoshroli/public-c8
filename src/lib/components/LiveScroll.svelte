@@ -17,7 +17,7 @@
   import { browser } from '$app/environment';
   import { portalState, year } from '$lib/stores/portal';
   import { tr } from '$lib/stores/lang';
-  import { rankedContributors, ALL_YEARS } from '$lib/api/derive';
+  import { rankedContributors } from '$lib/api/derive';
   import ContributorCard from './ContributorCard.svelte';
 
   interface Props {
@@ -111,7 +111,7 @@
       <Radio class="h-4 w-4" aria-hidden="true" />
     </span>
     <h2 class="text-sm font-extrabold sm:text-base">
-      {$tr('contributors_live_scroll', { year: $year === ALL_YEARS ? $tr('all_years') : $year })}
+      {$tr('contributors_live_scroll', { year: $year })}
     </h2>
     <span class="hidden rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-bold text-success xs:inline">
       ● {$tr('live')}

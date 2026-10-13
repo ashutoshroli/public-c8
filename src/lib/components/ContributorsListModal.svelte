@@ -4,7 +4,7 @@
   import ContributorDetail from './ContributorDetail.svelte';
   import { portalState, year } from '$lib/stores/portal';
   import { tr, lang } from '$lib/stores/lang';
-  import { rankedContributors, resoldItemsForYear, contributorTags, ALL_YEARS, type Contributor } from '$lib/api/derive';
+  import { rankedContributors, resoldItemsForYear, contributorTags, type Contributor } from '$lib/api/derive';
   import type { Ranked } from '$lib/utils/ranking';
   import { fmt } from '$lib/utils/format';
   import Avatar from './Avatar.svelte';
@@ -17,7 +17,7 @@
 
   let ranked = $derived(rankedContributors($portalState.data, $year));
   let resold = $derived(resoldItemsForYear($portalState.data, $year));
-  let yearLabel = $derived($year === ALL_YEARS ? $tr('all_years') : String($year));
+  let yearLabel = $derived(String($year));
   const nameOf = (c: { name: string; nameHindi: string }) =>
     $lang === 'hi' && c.nameHindi ? c.nameHindi : c.name;
 

@@ -33,8 +33,8 @@ import type {
   CommitteeRow
 } from './schema';
 
-export const ALL_YEARS = 'All' as const;
-export type YearSel = number | typeof ALL_YEARS;
+/** The selected festival year. (There is no "All years" view.) */
+export type YearSel = number;
 
 const yint = (v: unknown): number | null => {
   const n = parseInt((v ?? '').toString(), 10);
@@ -57,24 +57,16 @@ export function availableYears(data: PortalData): number[] {
   return arr.length ? arr : [new Date().getFullYear()];
 }
 
-const isAll = (sel: YearSel): sel is typeof ALL_YEARS => sel === ALL_YEARS;
-
 export function collectionsForYear(data: PortalData, sel: YearSel): CollectionRow[] {
-  const rows = data.collections || [];
-  if (isAll(sel)) return rows;
-  return rows.filter((c) => yint(c.Year) === sel);
+  return (data.collections || []).filter((c) => yint(c.Year) === sel);
 }
 
 export function expensesForYear(data: PortalData, sel: YearSel): ExpenseRow[] {
-  const rows = data.expenses || [];
-  if (isAll(sel)) return rows;
-  return rows.filter((e) => yint(e.Year) === sel);
+  return (data.expenses || []).filter((e) => yint(e.Year) === sel);
 }
 
 export function loansForYear(data: PortalData, sel: YearSel): LoanRow[] {
-  const rows = data.loans || [];
-  if (isAll(sel)) return rows;
-  return rows.filter((l) => yint(l.Year) === sel);
+  return (data.loans || []).filter((l) => yint(l.Year) === sel);
 }
 
 /** True once the committee has marked the loan Repaid in the management portal. */
@@ -115,10 +107,9 @@ export interface Financials {
 export function computeFinancials(data: PortalData, sel: YearSel): Financials {
   const collection = collectionsForYear(data, sel).reduce((s, c) => s + parseAmt(c.Amount), 0);
 
-  // Past Loan Returned: per-year uses the PREVIOUS year's loans; All uses all — and only
-  // loans marked Repaid. Money that has not come back is not budget (same rule as mgmt).
-  const repaid = (data.loans || []).filter(isRepaidLoan);
-  const prevLoans = isAll(sel) ? repaid : repaid.filter((l) => yint(l.Year) === sel - 1);
+  // Past Loan Returned: the PREVIOUS year's loans — and only those marked Repaid.
+  // Money that has not come back is not budget (same rule as mgmt).
+  const prevLoans = (data.loans || []).filter((l) => isRepaidLoan(l) && yint(l.Year) === sel - 1);
   const pastLoanReturned = prevLoans.reduce((s, l) => s + loanTotalWithInterest(l).total, 0);
 
   const totalBudget = collection + pastLoanReturned;
@@ -548,7 +539,7 @@ export function committeeForYear(
   sel: YearSel,
   userMap = buildUserMap(data)
 ): CommitteeMember[] {
-  const rows = (data.committee || []).filter((r) => (isAll(sel) ? true : yint(r.Year) === sel));
+  const rows = (data.committee || []).filter((r) => yint(r.Year) === sel);
   return rows.map((r) => {
     const id = (r.ID ?? r.Name ?? '').toString().trim();
     const u = userMap.get(id);
