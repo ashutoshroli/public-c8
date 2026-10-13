@@ -8,7 +8,6 @@
   import { portalState, year, refreshPortal } from '$lib/stores/portal';
   import { tr, lang } from '$lib/stores/lang';
   import {
-    ALL_YEARS,
     computeFinancials,
     computeSummary,
     rankedContributors,
@@ -29,7 +28,7 @@
   let loading = $derived($portalState.status === 'loading');
   let fin = $derived(computeFinancials($portalState.data, $year));
   let sum = $derived(computeSummary($portalState.data, $year));
-  let yearLabel = $derived($year === ALL_YEARS ? $tr('all_years') : String($year));
+  let yearLabel = $derived(String($year));
 
   let refreshing = $state(false);
   async function onRefresh() {
@@ -151,7 +150,7 @@
           </div>
           <div class="flex items-center justify-between py-3">
             <dt class="text-muted">
-              {$year === ALL_YEARS ? $tr('lifetime_loans_returned') : $tr('past_loan_returned')}
+              {$tr('past_loan_returned')}
             </dt>
             <dd class="font-extrabold text-info">{fmt(fin.pastLoanReturned)}</dd>
           </div>

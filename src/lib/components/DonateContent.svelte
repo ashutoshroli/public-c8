@@ -1,10 +1,6 @@
 <script lang="ts">
   /**
-   * Shared "Donate Now" page body, used by every skin's pages/Donate.svelte so
-   * the (DB-driven) content and layout stay identical across all 18 themes. Each
-   * skin passes its own card surface class (e.g. premium `surface`, festival
-   * `CARD`) via the `surfaceClass` prop; everything else is theme-agnostic
-   * (brand/slate utilities that resolve on every theme, light + dark).
+   * "Donate Now" page body (used by /donate).
    *
    * All payment details come from the backend (portal_settings donation_*, via
    * donationSettings()); any empty field is hidden. The committee-member list is
@@ -16,11 +12,6 @@
   import { tr, lang } from '$lib/stores/lang';
   import { donationSettings, currentCommittee } from '$lib/api/derive';
 
-  interface Props {
-    /** The skin's card surface class (e.g. 'surface' or the festival CARD). */
-    surfaceClass?: string;
-  }
-  let { surfaceClass = 'surface' }: Props = $props();
 
   let d = $derived(donationSettings($portalState.data));
   let members = $derived(currentCommittee($portalState.data));
@@ -55,12 +46,12 @@
   </div>
 
   {#if !hasAny && members.length === 0}
-    <div class="{surfaceClass} p-6 text-center text-muted">{$tr('donate_empty')}</div>
+    <div class="surface p-6 text-center text-muted">{$tr('donate_empty')}</div>
   {/if}
 
   <!-- 1. Online (UPI) -->
   {#if d.upiId || d.qrUrl}
-    <section class="{surfaceClass} space-y-3 p-5">
+    <section class="surface space-y-3 p-5">
       <h3 class="flex items-center gap-2 text-base font-bold text-ink">
         <Smartphone class="h-4 w-4 text-brand-500" aria-hidden="true" /> {$tr('donate_online_h')}
       </h3>
@@ -105,7 +96,7 @@
 
   <!-- 2. Bank Transfer -->
   {#if d.bankAccountName || d.bankName || d.accountNumber || d.ifsc}
-    <section class="{surfaceClass} space-y-3 p-5">
+    <section class="surface space-y-3 p-5">
       <h3 class="flex items-center gap-2 text-base font-bold text-ink">
         <Landmark class="h-4 w-4 text-brand-500" aria-hidden="true" /> {$tr('donate_bank_h')}
       </h3>
@@ -136,7 +127,7 @@
 
   <!-- 3. Cash — live committee members (year-independent) -->
   {#if members.length > 0}
-    <section class="{surfaceClass} space-y-3 p-5">
+    <section class="surface space-y-3 p-5">
       <h3 class="flex items-center gap-2 text-base font-bold text-ink">
         <Wallet class="h-4 w-4 text-brand-500" aria-hidden="true" /> {$tr('donate_cash_h')}
       </h3>

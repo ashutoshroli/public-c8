@@ -5,21 +5,13 @@
    * (Downloads, Committee, Donate) as clean full-width rows. The sheet has its
    * own header ("More" + close X). Tapping the overlay, the X, an item, Escape,
    * or a route change all close it. Shown only on mobile — desktop navs list
-   * every item inline. Each skin passes its active/idle trigger classes so the
-   * tab matches the surrounding bar.
+   * every item inline. The caller passes active/idle trigger classes so the tab
+   * matches the surrounding bar.
    *
    * IMPORTANT — the overlay is teleported to <body> via the `portal` action.
-   * Each skin's <nav> is `position: fixed` and uses `backdrop-blur`; a nested
-   * `position: fixed` child is contained by that blurred ancestor (backdrop-
-   * filter creates a containing block), so without the portal the "fixed" modal
-   * would be clipped to the nav bar and appear inline. Rendered on <body> it
-   * covers the whole viewport. The SURFACE colour comes from the active theme
-   * tokens (--surface-bg over --page-to) and the icons/active row use --accent,
-   * so the sheet matches whatever theme is applied. Text / close / dividers use
-   * Tailwind slate + `dark:` pairs (NOT --surface-border, which is a border/
-   * hairline token that is white or an accent colour in several themes and left
-   * the labels unreadable on light surfaces) — the sheet carries data-theme +
-   * the `dark` class so those variants flip correctly.
+   * The bottom <nav> is `position: fixed`, and a nested `position: fixed` child
+   * can be contained by such an ancestor, so without the portal the modal could
+   * be clipped to the nav bar. Rendered on <body> it covers the whole viewport.
    */
   import { page } from '$app/stores';
   import { dialog } from '$lib/a11y/dialog'; // audit PR-36
@@ -51,7 +43,7 @@
     idleClass?: string;
     /** Optional extra classes on the trigger button (layout, shared with tabs). */
     triggerClass?: string;
-    /** When true, wrap the icon in the premium-style pill badge. */
+    /** When true, wrap the icon in a pill badge. */
     iconBadge?: boolean;
   }
   let {
@@ -127,10 +119,8 @@
 </div>
 
 {#if open}
-  <!-- Teleported to <body> so it escapes the nav's fixed/backdrop-blur
-       containing block and covers the whole viewport. Carries `data-theme` +
-       the `dark` class copied from <html> so the theme tokens resolve here too
-       (a portaled node lives outside the app root that holds them). -->
+  <!-- Teleported to <body> so it escapes the nav's fixed containing block and
+       covers the whole viewport. -->
   <div
     use:portal
     class="fixed inset-0 z-[100] lg:hidden"
@@ -149,8 +139,7 @@
       transition:fade={{ duration: 180 }}
     ></button>
 
-    <!-- Bottom sheet — opaque, theme-tokened surface (page gradient base +
-         surface tint on top so it is solid on both light and dark themes). -->
+    <!-- Bottom sheet — opaque white surface. -->
     <div
       class="absolute inset-x-0 bottom-0 rounded-t-2xl border-t border-line bg-white text-ink shadow-2xl"
       style="padding-bottom: env(safe-area-inset-bottom);"

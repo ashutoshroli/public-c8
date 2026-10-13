@@ -1,7 +1,7 @@
 // One-off icon generator: rasterizes static/logo.svg into the PWA PNG icons
 // referenced by vite.config.ts's manifest. Run with `node scripts/gen-icons.mjs`.
-// sharp is used ad-hoc (not a committed dependency); the generated PNGs are the
-// committed artifacts.
+// sharp is a devDependency (never shipped to the browser); the generated PNGs are
+// the committed artifacts.
 import sharp from 'sharp';
 import { readFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

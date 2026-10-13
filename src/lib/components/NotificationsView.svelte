@@ -5,16 +5,10 @@
    * It is rendered INSIDE the sheet's existing container (see MoreMenu.svelte),
    * not as a second overlay — that is what makes it exactly the same size and
    * sit in exactly the same place as the Menu view, and it avoids duplicating the
-   * sheet's tricky bits (the portal to <body> and the manual copy of the theme
-   * tokens onto the portaled node).
+   * sheet's portal to <body>.
    *
-   * THEME-DRIVEN: the back arrow, the bell, the unread dot, the row highlight
-   * and every accent surface read the live `--accent` token, so the panel takes
-   * on each theme's colour. Structural hairlines use `black/10`
-   * rather than `--surface-border`, because that token is WHITE at :root and the
-   * default light theme (sunrise) never overrides it, which would leave the
-   * dividers invisible on the sheet's light surface. Neutral text uses the
-   * `slate-* /` pairing the sheet itself already uses.
+   * Colours: the back arrow, the bell, the unread dot and the row highlight use the
+   * `--accent` token (brand green); hairlines use `black/10`.
    */
   import { ArrowLeft, Bell, BellRing, CheckCheck, Trash2 } from '@lucide/svelte';
   import { sameOriginPath } from '$lib/pushTarget.js';
