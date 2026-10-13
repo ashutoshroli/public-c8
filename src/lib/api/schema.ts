@@ -70,7 +70,9 @@ export const loanRow = row.extend({
   'Loan ID': cell,
   'Intrest Rate': cell,
   'Interest Rate': cell,
-  Tenure: cell
+  Tenure: cell,
+  /** 'Active' | 'Repaid' — only Repaid loans count as "Past Loan Returned". */
+  Status: cell
 });
 
 export const guarantorRow = row.extend({
