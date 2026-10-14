@@ -16,7 +16,7 @@
    * visitor's service worker answering a navigation from its cached app shell.
    */
   import { page } from '$app/stores';
-  import { tr } from '$lib/stores/lang';
+  import { tr, lp } from '$lib/stores/lang';
   import { Home, AlertTriangle } from '@lucide/svelte';
 
   let status = $derived($page.status);
@@ -40,7 +40,7 @@
     {notFound ? $tr('error_404_body') : $tr('error_generic_body')}
   </p>
   <a
-    href="/"
+    href={$lp('/')}
     class="mt-2 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white"
   >
     <Home class="h-4 w-4" aria-hidden="true" />

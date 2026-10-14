@@ -15,7 +15,8 @@
    */
   import { page } from '$app/stores';
   import { dialog } from '$lib/a11y/dialog'; // audit PR-36
-  import { tr } from '$lib/stores/lang';
+  import { tr, lp } from '$lib/stores/lang';
+  import { stripLang } from '$lib/lang/url';
   import { NAV_MORE, NAV_MORE_PATHS } from './nav';
   import { MoreHorizontal, X, ChevronRight, Bell } from '@lucide/svelte';
   import { fade, fly } from 'svelte/transition';
@@ -55,7 +56,8 @@
   }: Props = $props();
 
   let open = $state(false);
-  const isMoreActive = $derived(NAV_MORE_PATHS.some((h) => $page.url.pathname.startsWith(h)));
+  // The language is not part of which tab is active: /hi/downloads lights up Downloads.
+  const isMoreActive = $derived(NAV_MORE_PATHS.some((h) => stripLang($page.url.pathname).startsWith(h)));
 
   // Which view the sheet is showing. Both live in the SAME sheet container, so
   // the notifications list is guaranteed to be the same size and in the same
@@ -94,7 +96,7 @@
     }
   });
 
-  const isItemActive = (href: string) => $page.url.pathname.startsWith(href);
+  const isItemActive = (href: string) => stripLang($page.url.pathname).startsWith(href);
 
 </script>
 
@@ -201,7 +203,7 @@
             {@const Icon = item.icon}
             {@const active = isItemActive(item.href)}
             <a
-              href={item.href}
+              href={$lp(item.href)}
               aria-current={active ? 'page' : undefined}
               onclick={() => (open = false)}
               class="flex items-center gap-3.5 rounded-xl px-3 py-3.5 text-[15px] font-semibold transition

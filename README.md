@@ -11,7 +11,10 @@ SvelteKit 2 + Svelte 5 + TypeScript + Tailwind, `adapter-static` (fallback `404.
 
 ## Routes
 `/` Home · `/contributors` · `/expenses` · `/loans` · `/committee` · `/downloads` ·
-`/decade` · `/donate` · `/verify?record=` · `/guide` · `/privacy` · `/terms`
+`/decade` · `/donate` · `/verify?record=` · `/guide` · `/loan-rules` · `/privacy` · `/terms`
+
+Every page also exists in Hindi under `/hi` (`/hi`, `/hi/expenses`, …), and every year that has
+records has a page of its own: `/2025`, `/hi/2025` (see *Two languages, one page per year*).
 
 ## Structure
 ```
@@ -21,6 +24,7 @@ src/lib/
   components/  Shell (header, nav, footer) · MoreMenu · LiveScroll · Modal · states
   utils/       format · ranking · drive · decadeData
 src/routes/    ek page = ek folder, seedha design + derive functions
+src/routes/hi/ Hindi twins: each is a 1-line wrapper that renders the English page component
 ```
 
 ## Search, previews and PWA files
@@ -67,6 +71,41 @@ HTML when the site is **built** from the data the API returns at that moment.
 
 Code: `src/lib/snapshot/` (facts → sentences, build-time fetch, Vite plugin) and
 `src/lib/components/AccountsText.svelte`.
+
+## Two languages, one page per year
+**The language is in the address.** `/hi/…` is Hindi, everything else is English. Before this, the
+language was a setting kept in the browser, so one address served two languages and a search engine
+(which has no setting) only ever saw English. Now each language page exists on its own, can be
+shared and bookmarked, and says so to search engines:
+
+- Every page is its own canonical and lists its twin with `hreflang` (`en`, `hi`, and `x-default` =
+  English). `sitemap.xml` lists each page twice with the full `hreflang` set. `<html lang>` is `hi` on
+  the Hindi pages (`src/hooks.server.ts`). Titles, descriptions and structured data are Hindi there.
+- The language button in the header is a real link to the same page in the other language, so it
+  works with scripts off and a crawler can follow it.
+- **A visitor who chose Hindi keeps getting Hindi:** the choice is remembered in the browser, and a
+  tiny script in `app.html` takes them from an English page address to its `/hi` twin before the page
+  paints. Crawlers have no browser storage, so they see English at the English address and Hindi at
+  `/hi/…`. Files (`robots.txt`, `sitemap.xml`, `llms.txt`, `/.well-known/…`) have one address and are
+  never redirected.
+- The Hindi route files are wrappers around the English page components, so the two cannot drift
+  apart. A new page needs its `ROUTES` entry (incl. `descriptionHi`) and a wrapper under `src/routes/hi/`
+  — a test fails until both exist.
+
+**A page for each year** (`/2025`, `/hi/2025`, …) holds that year's contributions, expenses, loans and
+committee roles in plain sentences, with the committee's "Our Journey" story for the year when it has
+one, links to the other years and to the detailed ledgers. A year gets a page when it has any
+contribution, loan, committee row or expense; the pages are created at build time from the same
+snapshot as above (`src/routes/[year=year]`), so a **new year appears after the next Redeploy**.
+(Until then, visitors who navigate inside the app already see it, drawn from live data.) The same
+rules apply: no names, no individual amounts. The year story is left out if it contains the whole
+name of anyone in the contributors list, a phone number or an email — the build log lists any it held
+back, and a published story is the committee's own text, so read them once at `/<year>`.
+
+`/hi/llms-full.txt` is the Hindi version of `/llms-full.txt` (both now include a section per year).
+
+Code: `src/lib/lang/url.ts` (language ↔ address), `src/lib/stores/lang.ts`,
+`src/lib/components/YearPage.svelte`, `src/lib/components/Seo.svelte`.
 
 ## Offline
 The service worker precaches the app's code, fonts and icons plus one **app shell** (`/app-shell`,

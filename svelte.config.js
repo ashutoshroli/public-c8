@@ -83,6 +83,18 @@ const config = {
       // finding that out at build time is far cheaper than finding it in Search Console.
       handleHttpError: ({ path, message }) => {
         throw new Error(message + ` (${path})`);
+      },
+      // A route that is marked for prerendering but that no link or entry reached is a page nobody
+      // can find, and the build says so — EXCEPT the year pages. They exist only for years that
+      // have records, so a build without data (CPM_SNAPSHOT=off, or a brand-new database) has
+      // none, and that is not a mistake.
+      handleUnseenRoutes: ({ routes }) => {
+        const unlinked = routes.filter((id) => !/^\/(hi\/)?\[year=year\]$/.test(id));
+        if (unlinked.length > 0) {
+          throw new Error(
+            `These routes are prerendered but nothing links to them:\n${unlinked.map((id) => `  - ${id}`).join('\n')}`
+          );
+        }
       }
     }
   }

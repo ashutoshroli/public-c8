@@ -9,7 +9,7 @@ import { snapshot } from '$lib/snapshot';
 export const prerender = true;
 
 export function GET() {
-  return new Response(llmsTxt(config.siteUrl, { fullTextAsOf: snapshot?.asOf }), {
+  return new Response(llmsTxt(config.siteUrl, { fullTextAsOf: snapshot?.asOf, years: snapshot?.years }), {
     headers: {
       'Content-Type': 'text/plain; charset=utf-8',
       'Cache-Control': 'public, max-age=3600',

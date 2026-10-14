@@ -25,6 +25,7 @@
   import { accountsText, type Source } from '$lib/snapshot/text';
   import { carrierScript, prerenderedFacts } from '$lib/snapshot/runtime';
   import { istDate } from '$lib/snapshot/ist';
+  import TextBlocks from './TextBlocks.svelte';
 
   let { page }: { page: PageKey } = $props();
 
@@ -64,16 +65,18 @@
   >
     <h2 id="accounts-text-{page}" class="text-base font-bold text-ink">{model.heading}</h2>
     <p class="text-xs text-muted">{model.note}</p>
-    {#each model.blocks as block}
-      {#if block.kind === 'p'}
-        <p>{block.text}</p>
-      {:else}
-        {#if block.title}<p class="font-semibold">{block.title}</p>{/if}
-        <ul class="list-disc space-y-1 pl-5">
-          {#each block.items as item}<li>{item}</li>{/each}
+    <TextBlocks blocks={model.blocks} />
+    {#if model.years}
+      <!-- A page for each year: this is where a reader (or a crawler) finds them. -->
+      <nav aria-label={model.years.title}>
+        <p class="font-semibold">{model.years.title}</p>
+        <ul class="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+          {#each model.years.items as y}
+            <li><a href={y.href} class="font-semibold text-brand-700 underline underline-offset-2">{y.label}</a></li>
+          {/each}
         </ul>
-      {/if}
-    {/each}
+      </nav>
+    {/if}
     {#if model.seeAlso}
       <p>
         {$tr('acc_see_also')}:

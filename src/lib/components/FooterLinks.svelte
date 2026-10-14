@@ -10,24 +10,24 @@
    * the prerendered HTML that a crawler reads linked to neither. The footer is in the HTML of
    * every page, which gives both a plain <a href> from everywhere on the site.
    */
-  import { tr } from '$lib/stores/lang';
+  import { tr, lp } from '$lib/stores/lang';
   import { consentPanelOpen } from '$lib/analytics/consent';
 
   const linkClass = 'underline decoration-dotted underline-offset-2 opacity-80 hover:opacity-100';
 </script>
 
 <nav class="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs" aria-label="Footer">
-  <a href="/contributors" class={linkClass}>{$tr('contributors_list')}</a>
+  <a href={$lp('/contributors')} class={linkClass}>{$tr('contributors_list')}</a>
   <span class="opacity-40" aria-hidden="true">·</span>
-  <a href="/decade" class={linkClass}>{$tr('decade_title')}</a>
+  <a href={$lp('/decade')} class={linkClass}>{$tr('decade_title')}</a>
   <span class="opacity-40" aria-hidden="true">·</span>
-  <a href="/guide" class={linkClass}>{$tr('guide_footer_link')}</a>
+  <a href={$lp('/guide')} class={linkClass}>{$tr('guide_footer_link')}</a>
   <span class="opacity-40" aria-hidden="true">·</span>
-  <a href="/loan-rules" class={linkClass}>{$tr('footer_loan_rules')}</a>
+  <a href={$lp('/loan-rules')} class={linkClass}>{$tr('footer_loan_rules')}</a>
   <span class="opacity-40" aria-hidden="true">·</span>
-  <a href="/privacy" class={linkClass}>{$tr('footer_privacy')}</a>
+  <a href={$lp('/privacy')} class={linkClass}>{$tr('footer_privacy')}</a>
   <span class="opacity-40" aria-hidden="true">·</span>
-  <a href="/terms" class={linkClass}>{$tr('footer_terms')}</a>
+  <a href={$lp('/terms')} class={linkClass}>{$tr('footer_terms')}</a>
   <span class="opacity-40" aria-hidden="true">·</span>
   <button type="button" class={linkClass} onclick={() => consentPanelOpen.set(true)}>{$tr('footer_cookies')}</button>
 </nav>

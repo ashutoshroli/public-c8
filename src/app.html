@@ -15,6 +15,28 @@
     <meta name="apple-mobile-web-app-title" content="Chhath Puja" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
+    <!-- Language = address (/hi/… is Hindi; src/lib/lang/url.ts). Before first paint: a Hindi address gets
+         lang="hi" (the offline shell is one file for every address), and a visitor who chose Hindi on
+         an earlier visit (localStorage) is taken from an English PAGE address to its /hi twin. Files are
+         never redirected; crawlers have no storage. The flag stops the analytics snippet below from
+         counting the page that is being left. Tested by src/lib/lang/app-html-script.test.ts. -->
+    <script>
+      (function () {
+        try {
+          var p = location.pathname;
+          if (p === '/hi' || p.indexOf('/hi/') === 0) {
+            document.documentElement.setAttribute('lang', 'hi');
+            return;
+          }
+          if (/\.[A-Za-z0-9]+$/.test(p) || p.indexOf('/.well-known/') === 0) return;
+          if (localStorage.getItem('cpm_public_lang') === 'hi') {
+            window.__cpmRedirecting = true;
+            location.replace('/hi' + (p === '/' ? '' : p) + location.search + location.hash);
+          }
+        } catch (e) {}
+      })();
+    </script>
+
     <!-- Google Tag Manager (container GTM-N6BF7NP7). GA4 and Microsoft Clarity run as TAGS
          INSIDE this single container. It loads ONLY if the visitor has already accepted
          analytics cookies (localStorage 'cpm_analytics_consent' === 'granted'); first-time
@@ -23,6 +45,7 @@
     <script>
       (function (w, d, s, l, i) {
         try {
+          if (w.__cpmRedirecting) return;
           if (localStorage.getItem('cpm_analytics_consent') !== 'granted') return;
         } catch (e) {
           return;
@@ -49,16 +72,6 @@
          tags is worse than one wrong one, so the duplicates are gone from here. -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="theme-color" content="#ffffff" />
-
-    <!-- No-flash language: set <html lang> before first paint. -->
-    <script>
-      (function () {
-        try {
-          var l = localStorage.getItem('cpm_public_lang') === 'hi' ? 'hi' : 'en';
-          document.documentElement.setAttribute('lang', l);
-        } catch (e) {}
-      })();
-    </script>
 
     <!-- API lives on its own hostname: open DNS+TLS while the JS downloads (handshake only, no
          request reaches the Worker). Keep in sync with PUBLIC_API_BASE default in src/lib/config.ts. -->

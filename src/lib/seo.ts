@@ -15,12 +15,15 @@
 //     routes directory always drifts, so the sitemap is GENERATED from this table now and a test
 //     asserts the table covers the routes on disk.
 //
-// Descriptions are deliberately in English only, unlike the UI. Crawlers index one canonical
-// per URL and the portal serves both languages from the same path, so a language-switched
-// description would make the indexed text depend on whichever visitor was crawled. The `<title>`
-// stays translated because that is what a human reads in a tab.
+// Descriptions are in the language of the ADDRESS. They used to be English only, for a reason that
+// no longer holds: both languages were served from one path, so a description that followed the
+// visitor's language would have made the indexed text depend on whichever visitor was crawled. The
+// language is in the address now (/hi/… is Hindi, see lib/lang/url.ts), every URL has exactly one
+// language, and the Hindi page can have a Hindi description, title, canonical and hreflang pair.
 
 import { CONTACT_EMAIL } from './contact';
+import { t, type Lang } from './i18n';
+import { localePath, stripLang, yearOfPath } from './lang/url';
 
 export interface RouteMeta {
   /** Path, no trailing slash. '' is the home page. */
@@ -29,6 +32,8 @@ export interface RouteMeta {
   titleKey: string;
   /** Indexable description, English, <= ~155 chars so it is not truncated mid-sentence. */
   description: string;
+  /** The same, in Hindi, for the /hi/… page. */
+  descriptionHi: string;
   changefreq: 'daily' | 'weekly' | 'monthly' | 'yearly';
   priority: string;
   /**
@@ -48,6 +53,8 @@ export interface RouteMeta {
 export const ROUTES: RouteMeta[] = [
   {
     path: '',
+    descriptionHi:
+      'हर योगदान सबके सामने, हर खर्च का हिसाब। नवयुवक छठ पूजा समिति, शहरपुरा, गरडीह की लाइव वित्तीय पारदर्शिता।',
     data: true,
     titleKey: 'app_title',
     description:
@@ -57,6 +64,8 @@ export const ROUTES: RouteMeta[] = [
   },
   {
     path: '/contributors',
+    descriptionHi:
+      'नवयुवक छठ पूजा समिति के योगदानकर्ताओं की पूरी सूची, राशि और वर्ष के साथ, ठीक वैसी जैसी समिति की बही में दर्ज है।',
     data: true,
     titleKey: 'contributors_list',
     description:
@@ -66,15 +75,19 @@ export const ROUTES: RouteMeta[] = [
   },
   {
     path: '/expenses',
+    descriptionHi:
+      'नवयुवक छठ पूजा समिति का हर खर्च, हर वर्ष मद-दर-मद, ताकि गाँव का कोई भी व्यक्ति जाँच सके।',
     data: true,
     titleKey: 'expenses_ledger',
     description:
-      'Every rupee spent by Navyuvak Chhath Puja Samiti, itemised by category and year, open for anyone in the village to check.',
+      'Every rupee spent by Navyuvak Chhath Puja Samiti, listed item by item for each year, open for anyone in the village to check.',
     changefreq: 'weekly',
     priority: '0.7',
   },
   {
     path: '/loans',
+    descriptionHi:
+      'समिति कोष से दिए गए ऋण: राशि, गारंटर, स्थिति और वापसी, ताकि ऋण देने में जवाबदेही बनी रहे।',
     data: true,
     titleKey: 'loan_distribution',
     description:
@@ -84,6 +97,8 @@ export const ROUTES: RouteMeta[] = [
   },
   {
     path: '/committee',
+    descriptionHi:
+      'इस वर्ष नवयुवक छठ पूजा समिति की ज़िम्मेदारी सँभालने वाले लोग और उनकी भूमिकाएँ।',
     data: true,
     titleKey: 'active_committee',
     description:
@@ -93,6 +108,8 @@ export const ROUTES: RouteMeta[] = [
   },
   {
     path: '/decade',
+    descriptionHi:
+      'शहरपुरा में छठ पूजा के दस वर्ष: योगदान, खर्च और भागीदारी, साल-दर-साल।',
     data: true,
     titleKey: 'decade_title',
     description:
@@ -102,6 +119,8 @@ export const ROUTES: RouteMeta[] = [
   },
   {
     path: '/downloads',
+    descriptionHi:
+      'किसी भी वर्ष की रसीदें, प्रमाण-पत्र और समिति के प्रकाशित विवरण डाउनलोड करें।',
     titleKey: 'download_center',
     description:
       'Download receipts, certificates and the committee’s published statements for any year.',
@@ -110,6 +129,8 @@ export const ROUTES: RouteMeta[] = [
   },
   {
     path: '/donate',
+    descriptionHi:
+      'नवयुवक छठ पूजा समिति को योगदान कैसे दें: UPI, बैंक ट्रांसफ़र, या समिति के सदस्य को सीधे।',
     titleKey: 'donate_title',
     description:
       'How to contribute to Navyuvak Chhath Puja Samiti — UPI, bank transfer, or in person with the committee.',
@@ -121,6 +142,8 @@ export const ROUTES: RouteMeta[] = [
     // the id in the query string, so there is nothing here worth a search result — and a result
     // that landed a stranger on "record not found" would only be noise.
     path: '/verify',
+    descriptionHi:
+      'किसी रसीद को समिति की बही से मिलाकर जाँचें और पक्का करें कि योगदान दर्ज हुआ है।',
     titleKey: 'verify_title',
     description:
       'Check a receipt against the committee ledger and confirm the contribution was recorded.',
@@ -130,6 +153,8 @@ export const ROUTES: RouteMeta[] = [
   },
   {
     path: '/guide',
+    descriptionHi:
+      'पारदर्शिता पोर्टल का उपयोग कैसे करें: योगदान खोजना, बही पढ़ना और ऐप इंस्टॉल करना।',
     titleKey: 'guide_title',
     description:
       'How to use the transparency portal: finding a contribution, reading the ledgers, and installing the app.',
@@ -138,6 +163,8 @@ export const ROUTES: RouteMeta[] = [
   },
   {
     path: '/loan-rules',
+    descriptionHi:
+      'समिति बचा हुआ कोष कैसे उधार देती है: बोली, तीन गारंटर, सहमति और वापसी, और हर नियम कब से लागू है।',
     titleKey: 'loan_rules_subtitle',
     description:
       'How the committee lends the leftover fund: bidding, three guarantors, consent and repayment, and since when each loan rule applies.',
@@ -146,6 +173,8 @@ export const ROUTES: RouteMeta[] = [
   },
   {
     path: '/privacy',
+    descriptionHi:
+      'यह पोर्टल क्या प्रकाशित करता है, क्या सहेजता है, वैकल्पिक एनालिटिक्स कुकीज़ और कोई भी जानकारी कितने समय तक रखी जाती है।',
     titleKey: 'privacy_subtitle',
     description:
       'What this portal publishes, what it stores, its optional analytics cookies, and how long anything is kept.',
@@ -154,6 +183,8 @@ export const ROUTES: RouteMeta[] = [
   },
   {
     path: '/terms',
+    descriptionHi:
+      'नवयुवक छठ पूजा समिति के पारदर्शिता पोर्टल के उपयोग की शर्तें।',
     titleKey: 'terms_subtitle',
     description:
       'Terms for using the Navyuvak Chhath Puja Samiti transparency portal.',
@@ -168,9 +199,15 @@ export function normalisePath(pathname: string): string {
   return p === '' ? '' : p;
 }
 
+/** The table entry for an address in either language: '/hi/expenses' finds '/expenses'. */
 export function metaFor(pathname: string): RouteMeta | undefined {
-  const key = normalisePath(pathname);
+  const key = normalisePath(stripLang(normalisePath(pathname)));
   return ROUTES.find((r) => r.path === key);
+}
+
+/** A page's description in the language it is written in. */
+export function descriptionFor(meta: RouteMeta, lang: Lang): string {
+  return lang === 'hi' ? meta.descriptionHi : meta.description;
 }
 
 /** The routes that belong in search results, the sitemap and llms.txt. */
@@ -178,10 +215,56 @@ export function indexableRoutes(): RouteMeta[] {
   return ROUTES.filter((r) => !r.noindex);
 }
 
-/** True only for a known route that has not opted out. An unknown path is never indexable. */
+/**
+ * True only for a known route that has not opted out. An unknown path is never indexable.
+ * A year page ('/2025', '/hi/2025') is indexable: it is a real page, listed in the sitemap.
+ */
 export function isIndexable(pathname: string): boolean {
+  if (yearOfPath(normalisePath(stripLang(normalisePath(pathname)))) !== null) return true;
   const meta = metaFor(pathname);
   return !!meta && !meta.noindex;
+}
+
+// ------------------------------------------------------------------------ YEAR PAGES
+
+/** The title of a year page, in its language. */
+export function yearTitle(year: number, lang: Lang): string {
+  return t(lang, 'year_title', { year });
+}
+
+/** The description of a year page, in its language. */
+export function yearDescription(year: number, lang: Lang): string {
+  return t(lang, 'year_description', { year });
+}
+
+/**
+ * The document title (and share title) of a year page: "Chhath Puja 2025 — Navyuvak Chhath Puja
+ * Samiti". The other pages end in the short app title ("… — Chhath Puja"); for a year page that
+ * would read "Chhath Puja 2025 — Chhath Puja", so it ends in the committee's name instead, which
+ * is also what a searcher looking for this committee types.
+ */
+export function yearDocumentTitle(year: number, lang: Lang): string {
+  return `${yearTitle(year, lang)} — ${t(lang, 'org_name')}`;
+}
+
+// ------------------------------------------------------------------ TWO LANGUAGES, ONE PAGE
+
+export interface Alternate {
+  hreflang: 'en' | 'hi' | 'x-default';
+  href: string;
+}
+
+/**
+ * The hreflang set for a page: itself in each language plus x-default (English, the address a
+ * visitor with no preference gets). Every language version lists ALL of them, itself included —
+ * Google ignores a pair that is not reciprocal.
+ */
+export function alternatesFor(siteUrl: string, strippedPath: string): Alternate[] {
+  return [
+    { hreflang: 'en', href: canonicalFor(siteUrl, localePath(strippedPath, 'en')) },
+    { hreflang: 'hi', href: canonicalFor(siteUrl, localePath(strippedPath, 'hi')) },
+    { hreflang: 'x-default', href: canonicalFor(siteUrl, localePath(strippedPath, 'en')) },
+  ];
 }
 
 // ---------------------------------------------------------------- SOCIAL PREVIEW IMAGE
@@ -207,31 +290,63 @@ export function ogImageUrl(siteUrl: string): string {
   return `${siteUrl.replace(/\/+$/, '')}${OG_IMAGE.path}`;
 }
 
-/** The absolute canonical URL for a path. Always the SAME shape, so it cannot self-conflict. */
+/**
+ * The absolute canonical URL for a path (in either language: pass '/hi/expenses' for the Hindi
+ * page). Always the SAME shape, so it cannot self-conflict.
+ */
 export function canonicalFor(siteUrl: string, pathname: string): string {
   const base = siteUrl.replace(/\/+$/, '');
   const key = normalisePath(pathname);
   return key === '' ? `${base}/` : `${base}${key}`;
 }
 
+export interface SitemapOptions {
+  /** The IST date the accounts snapshot was read; the `lastmod` of the pages that carry it. */
+  lastmod?: string;
+  /** Years that have a page of their own (/2025). Empty or missing: no year pages are listed. */
+  years?: readonly number[];
+}
+
 /**
  * The sitemap, built from the table above.
+ *
+ * Every page is listed TWICE, once per language, and each entry carries the full hreflang set
+ * (both languages and x-default): that is how Google is told the two URLs are one page in two
+ * languages and not duplicates of each other.
  *
  * `noindex` routes are left out: a sitemap is a list of pages you WANT indexed, and offering a
  * page that also says `noindex` is a contradiction Search Console reports as an error.
  *
- * `lastmod` appears only on the pages whose HTML carries the accounts snapshot (`data: true`),
- * and only when there is a snapshot: its date is the day the data was read, which is the day
- * that text was last true. On the other pages a build does not mean the content changed, and a
- * sitemap that claims every page changed at every deploy trains crawlers to ignore the field.
+ * `lastmod` appears only on the pages whose HTML carries the accounts snapshot (`data: true`, and
+ * the year pages), and only when there is a snapshot: its date is the day the data was read, which
+ * is the day that text was last true. On the other pages a build does not mean the content
+ * changed, and a sitemap that claims every page changed at every deploy trains crawlers to ignore
+ * the field.
  */
-export function sitemapXml(siteUrl: string, opts: { lastmod?: string } = {}): string {
-  const urls = indexableRoutes().map((r) => {
-    const loc = canonicalFor(siteUrl, r.path);
-    const lastmod = r.data && opts.lastmod ? `<lastmod>${opts.lastmod}</lastmod>` : '';
-    return `  <url><loc>${loc}</loc>${lastmod}<changefreq>${r.changefreq}</changefreq><priority>${r.priority}</priority></url>`;
-  }).join('\n');
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
+export function sitemapXml(siteUrl: string, opts: SitemapOptions = {}): string {
+  const pages = [
+    ...indexableRoutes().map((r) => ({
+      path: r.path === '' ? '/' : r.path,
+      changefreq: r.changefreq,
+      priority: r.priority,
+      dated: !!r.data,
+    })),
+    ...(opts.years ?? []).map((y) => ({ path: `/${y}`, changefreq: 'monthly' as const, priority: '0.6', dated: true })),
+  ];
+
+  const urls = pages
+    .flatMap((pg) =>
+      (['en', 'hi'] as const).map((lang) => {
+        const loc = canonicalFor(siteUrl, localePath(pg.path, lang));
+        const lastmod = pg.dated && opts.lastmod ? `<lastmod>${opts.lastmod}</lastmod>` : '';
+        const alternates = alternatesFor(siteUrl, pg.path)
+          .map((a) => `<xhtml:link rel="alternate" hreflang="${a.hreflang}" href="${a.href}"/>`)
+          .join('');
+        return `  <url><loc>${loc}</loc>${lastmod}<changefreq>${pg.changefreq}</changefreq><priority>${pg.priority}</priority>${alternates}</url>`;
+      }),
+    )
+    .join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls}\n</urlset>\n`;
 }
 
 // ------------------------------------------------------------------ STRUCTURED DATA
@@ -249,8 +364,10 @@ const ORG = {
 } as const;
 
 export interface PageLd {
-  /** Route path as in ROUTES ('' is the home page). */
+  /** Route path WITHOUT a language prefix, as in ROUTES ('' or '/' is the home page; '/2025'). */
   path: string;
+  /** The language this page is written in; the URLs, `inLanguage` and the labels follow it. */
+  lang: Lang;
   /** The page's name, the same words as its og:title. */
   name: string;
   /** The page's meta description. */
@@ -284,8 +401,8 @@ export interface PageLd {
  * Pass `null` for a page that is not in the route table (the 404 page): it then gets the
  * organisation and the site but no WebPage claiming to be something it is not.
  *
- * Names and descriptions are English for the same reason the descriptions are (see the top of
- * this file); only the `<title>` a human reads in a tab follows the visitor's language.
+ * The page, its breadcrumb and its URLs are in the language of the address; the organisation and
+ * site nodes do not vary by language.
  */
 export function structuredData(siteUrl: string, page: PageLd | null): string {
   const base = siteUrl.replace(/\/+$/, '');
@@ -328,15 +445,16 @@ export function structuredData(siteUrl: string, page: PageLd | null): string {
   ];
 
   if (page) {
-    const url = canonicalFor(base, page.path);
-    const isHome = normalisePath(page.path) === '';
+    const stripped = page.path === '' ? '/' : page.path;
+    const url = canonicalFor(base, localePath(stripped, page.lang));
+    const isHome = stripped === '/';
     graph.push({
       '@type': 'WebPage',
       '@id': `${url}#webpage`,
       url,
       name: page.name,
       description: page.description,
-      inLanguage: 'en',
+      inLanguage: page.lang,
       isPartOf: { '@id': siteId },
       about: { '@id': orgId },
       // A one-item trail is not a breadcrumb: the home page has none.
@@ -347,7 +465,7 @@ export function structuredData(siteUrl: string, page: PageLd | null): string {
         '@type': 'BreadcrumbList',
         '@id': `${url}#breadcrumb`,
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: page.homeLabel, item: `${base}/` },
+          { '@type': 'ListItem', position: 1, name: page.homeLabel, item: canonicalFor(base, localePath('/', page.lang)) },
           { '@type': 'ListItem', position: 2, name: page.pageLabel, item: url },
         ],
       });

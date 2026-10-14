@@ -28,17 +28,32 @@ const MIN_TOKEN = 5;
 /** A description longer than this is prose rather than a ledger line, and prose is where names hide. */
 export const MAX_LINE_CHARS = 60;
 
-const SPLIT = /[\s,.;:()[\]{}"'`!?/\\|&+\-–—_*#@]+/u;
+// Everything that is not part of a word: whitespace, and any punctuation or symbol in ANY script —
+// including the Devanagari danda (।), which ends a Hindi sentence right after a name, and the curly
+// quotes a word processor produces. (Combining marks and the zero-width joiners inside Devanagari
+// words are neither punctuation nor symbols, so a word stays whole.)
+const SPLIT = /[\p{P}\p{S}\s]+/u;
 
 const norm = (s: string) => s.normalize('NFKC').toLowerCase().replace(/\s+/g, ' ').trim();
 const words = (s: string) => norm(s).split(SPLIT).filter(Boolean);
 
-/** Ten or more digits in a row (allowing spaces and dashes) is a phone number; '@' is an email. */
-const PHONE = /(?:\+?\d[\s-]?){10,}/;
+/** Ten or more digits in a row (allowing spaces and dashes) is a phone number; '@' is an email. Digits of any script count: ९८७६५४३२१०. */
+const PHONE = /(?:\+?\p{Nd}[\s-]?){10,}/u;
 
 export interface NameGuard {
-  /** True when the text must not be published as written. */
+  /**
+   * True when the text must not be published as written: it contains a known person's name (the
+   * whole name, or any distinctive word of it), a phone number or an email. For SHORT ledger lines.
+   */
   mentionsPersonOrContact(text: string): boolean;
+  /**
+   * The same check for PROSE, which is looser on purpose: it looks for a known person's WHOLE name,
+   * a phone number or an email, not for single words. Real user names include words like "Public"
+   * and "School" and "Contribution"; matching those in a paragraph about the committee's year would
+   * withhold a harmless sentence every time it said "public". A whole name in a paragraph is the
+   * case that matters, and the one this catches.
+   */
+  mentionsFullNameOrContact(text: string): boolean;
 }
 
 export function buildNameGuard(users: ReadonlyArray<UserRow> | undefined): NameGuard {
@@ -56,13 +71,24 @@ export function buildNameGuard(users: ReadonlyArray<UserRow> | undefined): NameG
     }
   }
 
+  const mentionsFullNameOrContact = (text: string): boolean => {
+    const t = (text ?? '').toString();
+    if (!t.trim()) return false;
+    if (t.includes('@') || PHONE.test(t)) return true;
+    // Every separator becomes one space (`words` splits on ALL of them: a comma, an apostrophe or a
+    // full stop right after a name must not hide it — "Thanks to Ram Kumar, our president").
+    const flat = ` ${words(t).join(' ')} `;
+    // Whole words, so "ram kumar" is not found inside "program kumarapuram".
+    for (const full of fullNames) if (flat.includes(` ${full} `)) return true;
+    return false;
+  };
+
   return {
+    mentionsFullNameOrContact,
     mentionsPersonOrContact(text: string): boolean {
       const t = (text ?? '').toString();
       if (!t.trim()) return false;
-      if (t.includes('@') || PHONE.test(t)) return true;
-      const flat = norm(t).replace(SPLIT, ' ').trim();
-      for (const full of fullNames) if (flat.includes(full)) return true;
+      if (mentionsFullNameOrContact(t)) return true;
       for (const w of words(t)) if (tokens.has(w)) return true;
       return false;
     },

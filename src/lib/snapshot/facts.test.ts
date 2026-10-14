@@ -15,9 +15,10 @@ import { T } from '$lib/i18n';
 import { computeFinancials } from '$lib/api/derive';
 import {
   PAGE_KEYS, MIN_VILLAGE_CONTRIBUTORS, defaultYear, decadeFacts, expensesFacts, loansFacts,
-  committeeFacts, contributorsFacts, homeFacts, factsForPage, type PageKey,
+  committeeFacts, contributorsFacts, homeFacts, factsForPage, yearPack, yearsWithRecords,
+  storyFor, storyWithheld, type PageKey,
 } from './facts';
-import { accountsText, modelToMarkdown } from './text';
+import { accountsText, modelToMarkdown, yearText, yearModelToMarkdown } from './text';
 import { buildNameGuard } from './redact';
 import { istDate, istYear, formatIstDate } from './ist';
 
@@ -482,5 +483,302 @@ describe('a snapshot and the live text cannot disagree', () => {
     const live = accountsText(f, 'en', { kind: 'live' });
     expect(snap.blocks).toEqual(live.blocks);
     expect(snap.note).not.toBe(live.note);
+  });
+});
+
+
+// ------------------------------------------------------------ 8. one page for each year
+
+describe('which years get a page', () => {
+  it('every year with a contribution, a loan, a committee or an expense, newest first', () => {
+    expect(yearsWithRecords(DATA)).toEqual([2025, 2024]);
+    const more = parsePortalData({
+      ...DATA,
+      expenses: [...DATA.expenses, { Year: 2022, Discription: 'Stage', Amount: 10 }],        // an expense-only year
+      committee: [...DATA.committee, { ID: 'USER0001', Name: 'USER0001', Year: 2019, 'View Role': 'President' }],
+    })!;
+    expect(yearsWithRecords(more)).toEqual([2025, 2024, 2022, 2019]);
+  });
+
+  it('does not invent a year: with no records at all there is none, not "this year"', () => {
+    // availableYears() falls back to the current year for an empty database; a page for a year with
+    // nothing in it would be a page of "no records" for the search engines to find.
+    expect(yearsWithRecords(parsePortalData({})!)).toEqual([]);
+    expect(yearsWithRecords(parsePortalData({ users: [{ ID: 'U1', Name: 'A B' }] })!)).toEqual([]);
+  });
+
+  it('the Home facts carry the list, which is what links the year pages', () => {
+    expect(homeFacts(DATA, 2025, NOW).years).toEqual([2025, 2024]);
+    const model = accountsText(homeFacts(DATA, 2025, NOW), 'en', { kind: 'snapshot', asOf: '2026-10-14' });
+    expect(model.years).toEqual({
+      title: 'Chhath Puja, year by year',
+      items: [{ href: '/2025', label: '2025' }, { href: '/2024', label: '2024' }],
+    });
+    const hi = accountsText(homeFacts(DATA, 2025, NOW), 'hi', { kind: 'snapshot', asOf: '2026-10-14' });
+    expect(hi.years!.items.map((i) => i.href)).toEqual(['/hi/2025', '/hi/2024']);
+    expect(hi.years!.title).toBe('छठ पूजा, वर्ष-दर-वर्ष');
+  });
+
+  it('the Decade text links the years that have a contribution on record, and no open year', () => {
+    const model = accountsText(decadeFacts(DATA, NOW), 'en', { kind: 'live' });
+    expect(model.years!.items.map((i) => i.label)).toEqual(['2025', '2024']);
+    expect(model.years!.items.some((i) => i.label === '2026')).toBe(false);
+  });
+
+  it('the other pages link no years', () => {
+    for (const k of ['expenses', 'loans', 'committee', 'contributors'] as PageKey[]) {
+      expect(accountsText(factsForPage(k, DATA, 2025, NOW), 'en', { kind: 'live' }).years, k).toBeUndefined();
+    }
+  });
+
+  it('every year the text links has a pack to be built (no link leads nowhere)', () => {
+    const ys = yearsWithRecords(DATA);
+    for (const y of decadeFacts(DATA, NOW).years.filter((r) => r.hasRecords).map((r) => r.year)) expect(ys).toContain(y);
+  });
+});
+
+describe('a year pack is the individual pages’ facts, for that year', () => {
+  const pack = yearPack(DATA, 2025, NOW);
+
+  it('carries exactly what the pages carry, so a year page and its page cannot disagree', () => {
+    expect(pack.year).toBe(2025);
+    expect(pack.home).toEqual(homeFacts(DATA, 2025, NOW));
+    expect(pack.contributors).toEqual(contributorsFacts(DATA, 2025));
+    expect(pack.expenses).toEqual(expensesFacts(DATA, 2025));
+    expect(pack.loans).toEqual(loansFacts(DATA, 2025));
+    expect(pack.committee).toEqual(committeeFacts(DATA, 2025));
+  });
+
+  it('is built per year: 2024 has its own figures', () => {
+    const p24 = yearPack(DATA, 2024, NOW);
+    expect(p24.year).toBe(2024);
+    expect(p24.contributors.contributors).toBe(2);
+    expect(p24.expenses.count).toBe(1);
+    expect(p24.loans.count).toBe(1);
+    expect(p24.committee.count).toBe(0);
+  });
+
+  it('never names a person, in JSON, in either language, or as Markdown', () => {
+    const json = JSON.stringify(pack);
+    for (const s of PERSONAL) expect(json, s).not.toContain(s);
+    for (const p of PEOPLE) expect(json, p.id).not.toContain(p.id);
+    for (const lang of ['en', 'hi'] as const) {
+      const m = yearText(pack, lang, { kind: 'snapshot', asOf: '2026-10-14' });
+      const flat = JSON.stringify(m) + yearModelToMarkdown(m);
+      for (const s of PERSONAL) expect(flat, `${lang}: ${s}`).not.toContain(s);
+    }
+  });
+
+  it('survives a JSON round trip (it travels to the browser as JSON)', () => {
+    expect(JSON.parse(JSON.stringify(pack))).toEqual(pack);
+  });
+});
+
+describe('the committee’s story of a year', () => {
+  const entry = (year: number, over: Record<string, string> = {}) => ({
+    year, title_en: `Year ${year}`, title_hi: `वर्ष ${year}`,
+    content_en: 'A good year for the village.', content_hi: 'गाँव के लिए एक अच्छा वर्ष।', ...over,
+  });
+  const withStories = (...e: ReturnType<typeof entry>[]) => parsePortalData({ ...DATA, journeyEntries: e })!;
+
+  it('is published for its own year, in both languages', () => {
+    const story = storyFor(withStories(entry(2025), entry(2024)), 2025)!;
+    expect(story.title).toEqual({ en: 'Year 2025', hi: 'वर्ष 2025' });
+    expect(story.content.en).toBe('A good year for the village.');
+    expect(story.content.hi).toBe('गाँव के लिए एक अच्छा वर्ष।');
+    expect(storyFor(withStories(entry(2024)), 2025), 'another year’s story is not this year’s').toBeNull();
+    expect(storyFor(DATA, 2025), 'no journey entries at all').toBeNull();
+  });
+
+  it('falls back to English when the Hindi is missing, rather than to nothing', () => {
+    const story = storyFor(withStories(entry(2025, { title_hi: '', content_hi: '' })), 2025)!;
+    expect(story.title.hi).toBe('Year 2025');
+    expect(story.content.hi).toBe('A good year for the village.');
+  });
+
+  it('is withheld when it names a known person — the whole name, in either script', () => {
+    const named: Record<string, string>[] = [
+      { content_en: `Thanks to ${PEOPLE[3].name} for the tent.` },
+      { content_hi: `${PEOPLE[3].nameHi} को धन्यवाद।` },
+      { title_en: `${PEOPLE[3].name}'s year` },
+    ];
+    for (const over of named) {
+      const data = withStories(entry(2025, over));
+      expect(storyFor(data, 2025), JSON.stringify(over)).toBeNull();
+      expect(storyWithheld(data, 2025), 'and the build can say it was withheld').toBe(true);
+    }
+  });
+
+  it('is withheld when it holds a phone number or an email', () => {
+    const contacts: Record<string, string>[] = [{ content_en: 'Call 98765 43210 for details.' }, { content_hi: 'लिखें: a@b.example' }];
+    for (const over of contacts) {
+      const data = withStories(entry(2025, over));
+      expect(storyFor(data, 2025), JSON.stringify(over)).toBeNull();
+      expect(storyWithheld(data, 2025)).toBe(true);
+    }
+  });
+
+  it('is NOT withheld for ordinary prose that happens to share a word with a name', () => {
+    // Real user names include "Public", "School", "Contribution". Matching single words would
+    // withhold every story that mentions the public or a school; only a WHOLE name is a person.
+    const users = [...DATA.users, { ID: 'USER0200', Name: 'Public School' }, { ID: 'USER0201', Name: 'Contribution Box' }];
+    const story = (content_en: string) => parsePortalData({ ...DATA, users, journeyEntries: [entry(2025, { content_en })] })!;
+
+    const prose = story('Public support, a school visit and a contribution from every household.');
+    expect(storyFor(prose, 2025)).not.toBeNull();
+    expect(storyWithheld(prose, 2025)).toBe(false);
+
+    const whole = story('We thank Public School for the tent.');
+    expect(storyFor(whole, 2025), 'the whole name is a person (here, a user really called that)').toBeNull();
+    expect(storyWithheld(whole, 2025)).toBe(true);
+  });
+
+  it('is not published when it is empty, and an empty one is not reported as withheld', () => {
+    const data = withStories(entry(2025, { title_en: '', title_hi: '', content_en: '', content_hi: '' }));
+    expect(storyFor(data, 2025)).toBeNull();
+    expect(storyWithheld(data, 2025)).toBe(false);
+  });
+
+  it('a year without a story reports nothing withheld', () => {
+    expect(storyWithheld(DATA, 2025)).toBe(false);
+  });
+});
+
+describe('the text of a year page', () => {
+  const pack = yearPack(DATA, 2025, NOW);
+  const flatOf = (m: ReturnType<typeof yearText>) =>
+    [m.heading, m.note, m.footnote, m.story?.title ?? '', m.story?.content ?? '',
+      ...m.sections.flatMap((x) => [x.title, ...x.blocks.flatMap((b) => (b.kind === 'p' ? [b.text] : [b.title ?? '', ...b.items]))])].join('\n');
+
+  it('has the five sections in order, titled with the short words, in either language', () => {
+    const en = yearText(pack, 'en', { kind: 'live' });
+    expect(en.heading).toBe('Chhath Puja 2025');
+    expect(en.sections.map((x) => [x.id, x.title])).toEqual([
+      ['overview', 'Overview'], ['contributors', 'Contributors'], ['expenses', 'Expenses'], ['loans', 'Loans'], ['committee', 'Committee'],
+    ]);
+    const hi = yearText(pack, 'hi', { kind: 'live' });
+    expect(hi.heading).toBe('छठ पूजा 2025');
+    expect(hi.sections.map((x) => x.title)).toEqual(['सारांश', 'योगदानकर्ता', 'व्यय', 'ऋण', 'समिति']);
+  });
+
+  it('says the "no names" note once, for the whole page, not under each section', () => {
+    const m = yearText(pack, 'en', { kind: 'live' });
+    expect(m.footnote).toBe('People’s names are not repeated in this summary.');
+    expect((flatOf(m).match(/People’s names are not repeated/g) || []).length).toBe(1);
+  });
+
+  it('leaves out the ten-year line, which belongs to the Home text', () => {
+    expect(flatOf(yearText(pack, 'en', { kind: 'live' }))).not.toMatch(/Since 2017/);
+    expect(JSON.stringify(accountsText(homeFacts(DATA, 2025, NOW), 'en', { kind: 'live' }).blocks)).toMatch(/Since 2017/);
+  });
+
+  it('uses the figures of that year, and the same sentences the pages use', () => {
+    const flat = flatOf(yearText(pack, 'en', { kind: 'live' }));
+    expect(flat).toContain('In 2025, 15 people contributed, all of them with money: ₹12,050 in total');
+    expect(flat).toContain('Expenses recorded for 2025: 7, totalling ₹37,547.');
+    expect(flat).toContain('Loans given in 2025: 2');
+    expect(flat).toContain('The 2025 committee has 4 members.');
+    expect(flat).toContain('President: 1');
+    const homeText = JSON.stringify(accountsText(homeFacts(DATA, 2025, NOW), 'en', { kind: 'live' }).blocks);
+    expect(homeText).toContain('In 2025, 15 people contributed, all of them with money: ₹12,050 in total');
+  });
+
+  it('leaves no placeholder unfilled and prints no NaN, for any year, in either language, empty or full', () => {
+    const sparse = parsePortalData({ users: [], collections: [{ Name: 'x', Year: 2030, Amount: 1 }] })!;
+    for (const [data, y] of [[DATA, 2025], [DATA, 2024], [sparse, 2030], [sparse, 2031], [parsePortalData({})!, 2025]] as const) {
+      for (const lang of ['en', 'hi'] as const) {
+        const flat = flatOf(yearText(yearPack(data, y, NOW), lang, { kind: 'snapshot', asOf: '2026-10-14' }));
+        expect(flat, `${lang} ${y}`).not.toMatch(/\{[a-zA-Z]+\}/);
+        expect(flat, `${lang} ${y}`).not.toMatch(/undefined|NaN|Infinity/);
+      }
+    }
+  });
+
+  it('a file note (llms-full) says the date and nothing about live figures replacing it', () => {
+    const m = yearText(pack, 'en', { kind: 'file', asOf: '2026-10-14' });
+    expect(m.note).toBe('Figures for 2025, as of 14 Oct 2026 (IST), from the committee’s ledger.');
+    expect(yearText(pack, 'en', { kind: 'snapshot', asOf: '2026-10-14' }).note).toContain('Live figures replace these');
+  });
+
+  it('shows the story first when there is one, and the Markdown carries it', () => {
+    const withStory = yearPack(parsePortalData({ ...DATA, journeyEntries: [{ year: 2025, title_en: 'The tent year', title_hi: 'तम्बू का वर्ष', content_en: 'We built a bigger ghat.', content_hi: 'हमने बड़ा घाट बनाया।' }] })!, 2025, NOW);
+    const m = yearText(withStory, 'en', { kind: 'live' });
+    expect(m.story).toEqual({ title: 'The tent year', content: 'We built a bigger ghat.' });
+    const md = yearModelToMarkdown(m);
+    expect(md.indexOf('**The tent year**')).toBeLessThan(md.indexOf('### Overview'));
+    expect(yearText(withStory, 'hi', { kind: 'live' }).story).toEqual({ title: 'तम्बू का वर्ष', content: 'हमने बड़ा घाट बनाया।' });
+    expect(yearText(pack, 'en', { kind: 'live' }).story).toBeNull();
+  });
+
+  it('the Markdown has an H3 for each section and ends with the names note', () => {
+    const md = yearModelToMarkdown(yearText(pack, 'en', { kind: 'file', asOf: '2026-10-14' }));
+    expect(md.split('\n').filter((l) => l.startsWith('### '))).toEqual(['### Overview', '### Contributors', '### Expenses', '### Loans', '### Committee']);
+    expect(md.trimEnd().endsWith('People’s names are not repeated in this summary.')).toBe(true);
+  });
+
+  it('every year-page key exists in both languages and is really translated', () => {
+    for (const key of Object.keys(T.en).filter((k) => /^(year_|llms_full_|acc_by_year_h)/.test(k))) {
+      expect(T.hi[key], `hi: ${key}`).toBeTruthy();
+      expect(T.hi[key], `${key} must not be the English text`).not.toBe(T.en[key]);
+    }
+    expect(Object.keys(T.hi).filter((k) => /^(year_|llms_full_)/.test(k)).sort())
+      .toEqual(Object.keys(T.en).filter((k) => /^(year_|llms_full_)/.test(k)).sort());
+  });
+});
+
+describe('the name guard is not fooled by what sits next to a name', () => {
+  // Found by a test of the year stories: the first version replaced only the FIRST run of
+  // separators, so "Ram Kumar, our president" or "Ram Kumar's year" slipped through the whole-name
+  // check. Prose puts a comma, a full stop, a bracket or an apostrophe right after a name.
+  const guard = buildNameGuard([
+    { Name: 'Ram Kumar', 'Name (Hindi)': 'राम कुमार' },
+    { Name: 'Sita Devi', 'Name (Hindi)': 'सीता देवी' },
+  ] as never);
+
+  it('finds the whole name beside any punctuation', () => {
+    for (const text of [
+      'Ram Kumar, our president, led it.',
+      "Ram Kumar's year",
+      'Thanks to Ram Kumar.',
+      'Thanks (Ram Kumar) and all.',
+      'with "Ram Kumar" in charge',
+      'Ram-Kumar did it',
+      'RAM   KUMAR',
+      'Ram Kumar; Sita Devi',
+      'a day with ram kumar!',
+    ]) {
+      expect(guard.mentionsFullNameOrContact(text), text).toBe(true);
+    }
+  });
+
+  it('finds a Hindi name before a danda, a comma or a curly quote', () => {
+    for (const text of [
+      'सब कुछ राम कुमार ने सँभाला।',
+      'राम कुमार, अध्यक्ष',
+      'धन्यवाद सीता देवी॥',
+      '‘सीता देवी’ को प्रणाम',
+      'राम कुमार जी',
+    ]) {
+      expect(guard.mentionsFullNameOrContact(text), text).toBe(true);
+    }
+  });
+
+  it('is by whole words: a longer word that merely contains the name is not the name', () => {
+    expect(guard.mentionsFullNameOrContact('program kumarapuram')).toBe(false);
+    expect(guard.mentionsFullNameOrContact('Ram and Kumar, separately')).toBe(false);
+  });
+
+  it('finds a phone number in any script, and an email', () => {
+    expect(guard.mentionsFullNameOrContact('call 9876543210')).toBe(true);
+    expect(guard.mentionsFullNameOrContact('call +91 98765 43210')).toBe(true);
+    expect(guard.mentionsFullNameOrContact('संपर्क ९८७६५४३२१०')).toBe(true);
+    expect(guard.mentionsFullNameOrContact('write to a@b.example')).toBe(true);
+    expect(guard.mentionsFullNameOrContact('2017 to 2025, 137 people')).toBe(false);
+  });
+
+  it('the line check (expense descriptions) sees all of the same', () => {
+    expect(guard.mentionsPersonOrContact('Tent from Ram Kumar, advance')).toBe(true);
+    expect(guard.mentionsPersonOrContact('तम्बू: राम कुमार।')).toBe(true);
+    expect(guard.mentionsPersonOrContact('Tent, banner and lights')).toBe(false);
   });
 });

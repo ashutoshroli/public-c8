@@ -11,7 +11,7 @@
   import { browser } from '$app/environment';
   import { page } from '$app/stores';
   import { portalState, refreshPortal } from '$lib/stores/portal';
-  import { tr, lang } from '$lib/stores/lang';
+  import { tr, lang, lp } from '$lib/stores/lang';
   import { verifyRecord, type VerifyResult } from '$lib/api/derive';
   import { verifyVerdict } from '$lib/api/verifyVerdict';
   import { fmt } from '$lib/utils/format';
@@ -181,7 +181,7 @@
 
   <div class="mt-4 text-center">
     <a
-      href="/"
+      href={$lp('/')}
       class="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-600 active:scale-95"
     >
       <ArrowLeft class="h-4 w-4" aria-hidden="true" />

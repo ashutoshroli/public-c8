@@ -1,6 +1,6 @@
 <script lang="ts">
   import PageHeading from '$lib/components/PageHeading.svelte';
-  import { tr, lang } from '$lib/stores/lang';
+  import { tr, lang, lp } from '$lib/stores/lang';
   import { POLICY_LAST_UPDATED, formatPolicyDate } from '$lib/policyDates';
   import { consentPanelOpen } from '$lib/analytics/consent';
   import { CONTACT_EMAIL } from '$lib/contact';
@@ -48,9 +48,9 @@
     >{$tr('privacy_email')}: {CONTACT_EMAIL}</a>
   </p>
   <p>
-    <a href="/committee" class="font-semibold text-brand-700 underline underline-offset-2">{$tr('contact_committee_link')}</a>
+    <a href={$lp('/committee')} class="font-semibold text-brand-700 underline underline-offset-2">{$tr('contact_committee_link')}</a>
   </p>
   <p>
-    <a href="/terms" class="font-semibold text-brand-700 underline underline-offset-2">{$tr('privacy_see_terms')}</a>
+    <a href={$lp('/terms')} class="font-semibold text-brand-700 underline underline-offset-2">{$tr('privacy_see_terms')}</a>
   </p>
 </article>

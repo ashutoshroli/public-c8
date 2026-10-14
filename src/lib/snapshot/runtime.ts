@@ -14,7 +14,7 @@
 
 import { browser } from '$app/environment';
 import { snapshot } from './index';
-import type { PageFacts, PageKey } from './facts';
+import type { PageFacts, PageKey, YearPack } from './facts';
 
 export interface Prerendered {
   asOf: string;
@@ -47,4 +47,47 @@ export function prerenderedFacts(page: PageKey): Prerendered | null {
 export function carrierScript(page: PageKey, pre: Prerendered): string {
   const json = JSON.stringify({ asOf: pre.asOf, facts: pre.facts }).replace(/</g, '\\u003c');
   return `<script type="application/json" id="${carrierId(page)}">${json}</script>`;
+}
+
+// ---------------------------------------------------------------------------- a year page
+
+/** What a year page (/2025, /hi/2025) was prerendered with: its pack, and the years that have a page. */
+export interface PrerenderedYear {
+  asOf: string;
+  pack: YearPack;
+  /** Every year with a page, newest first: the page links to its neighbours from this. */
+  years: number[];
+}
+
+const yearCarrierId = (year: number) => `cpm-snapshot-year-${year}`;
+
+function isYearPack(year: number, v: unknown): v is YearPack {
+  if (!v || typeof v !== 'object') return false;
+  const p = v as Partial<Record<keyof YearPack, { kind?: unknown } | number | null>>;
+  const kind = (k: 'home' | 'contributors' | 'expenses' | 'loans' | 'committee') => (p[k] as { kind?: unknown } | undefined)?.kind === k;
+  return p.year === year && kind('home') && kind('contributors') && kind('expenses') && kind('loans') && kind('committee');
+}
+
+/** What this year page was prerendered with, or null (a year with no page, dev, client navigation). */
+export function prerenderedYear(year: number): PrerenderedYear | null {
+  if (!browser) {
+    const pack = snapshot?.byYear[year];
+    return snapshot && pack ? { asOf: snapshot.asOf, pack, years: snapshot.years } : null;
+  }
+  try {
+    const el = document.getElementById(yearCarrierId(year));
+    if (!el?.textContent) return null;
+    const parsed = JSON.parse(el.textContent) as { asOf?: unknown; pack?: unknown; years?: unknown };
+    if (typeof parsed.asOf !== 'string' || !isYearPack(year, parsed.pack)) return null;
+    if (!Array.isArray(parsed.years) || !parsed.years.every((y) => Number.isInteger(y))) return null;
+    return { asOf: parsed.asOf, pack: parsed.pack, years: parsed.years as number[] };
+  } catch {
+    return null;
+  }
+}
+
+/** The inert JSON block for a year page, for `{@html}` in <svelte:head>. */
+export function yearCarrierScript(year: number, pre: PrerenderedYear): string {
+  const json = JSON.stringify({ asOf: pre.asOf, pack: pre.pack, years: pre.years }).replace(/</g, '\\u003c');
+  return `<script type="application/json" id="${yearCarrierId(year)}">${json}</script>`;
 }

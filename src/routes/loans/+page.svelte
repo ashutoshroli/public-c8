@@ -6,7 +6,7 @@
   import ErrorState from '$lib/components/ErrorState.svelte';
   import SkeletonList from '$lib/components/SkeletonList.svelte';
   import { portalState, year } from '$lib/stores/portal';
-  import { tr, lang } from '$lib/stores/lang';
+  import { tr, lang, lp } from '$lib/stores/lang';
   import { loanItems } from '$lib/api/derive';
   import { fmt, initials, avatarGradient } from '$lib/utils/format';
   import { COMMITTEE_GUARANTOR_BAN_FROM_YEAR } from '$lib/loanRules';
@@ -142,7 +142,7 @@
   {/if}
 
   <p class="mt-4 text-center text-xs">
-    <a href="/loan-rules" class="font-semibold text-brand-700 underline underline-offset-2">{$tr('loan_rules_link')}</a>
+    <a href={$lp('/loan-rules')} class="font-semibold text-brand-700 underline underline-offset-2">{$tr('loan_rules_link')}</a>
   </p>
 {/if}
 

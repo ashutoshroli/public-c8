@@ -13,14 +13,36 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, unmount } from 'svelte';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { resolve, join } from 'node:path';
+import { resolve, join, dirname } from 'node:path';
 
 const SRC = resolve(process.cwd(), 'src');
 const read = (p: string) => readFileSync(join(SRC, p), 'utf8');
-const ROUTES = readdirSync(join(SRC, 'routes'), { withFileTypes: true })
-  .filter((d) => d.isDirectory() && existsSync(join(SRC, 'routes', d.name, '+page.svelte')))
-  .map((d) => `routes/${d.name}/+page.svelte`)
-  .concat(['routes/+page.svelte']);
+
+/** Every route directory under src/routes that holds a +page.svelte, as 'routes/<dir>/+page.svelte'. */
+function pageFiles(dir = 'routes'): string[] {
+  const out: string[] = [];
+  if (existsSync(join(SRC, dir, '+page.svelte'))) out.push(`${dir}/+page.svelte`);
+  for (const d of readdirSync(join(SRC, dir), { withFileTypes: true })) {
+    if (d.isDirectory()) out.push(...pageFiles(`${dir}/${d.name}`));
+  }
+  return out;
+}
+const ROUTES = pageFiles();
+
+/**
+ * Many routes are WRAPPERS: the Hindi page (/hi/expenses) imports the English page component, and
+ * the year routes import YearPage. The heading belongs to the component they render, so a wrapper
+ * is read through to it.
+ */
+function headingSource(file: string): string {
+  const src = read(file);
+  const m = /import \w+ from '([^']+\.svelte)';/.exec(src);
+  if (!m || src.includes('<h1') || src.includes('<PageHeading')) return src;
+  const target = m[1].startsWith('$lib/')
+    ? m[1].replace('$lib/', 'lib/')
+    : join(dirname(file), m[1]).replace(/\\/g, '/');
+  return headingSource(target);
+}
 
 // -------------------------------------------------------- 1. A WAY PAST THE CHROME
 
@@ -44,17 +66,18 @@ describe('the shell offers a skip link', () => {
 
 describe('every route has exactly one h1', () => {
   it('finds the routes (guards against a vacuous pass)', () => {
-    expect(ROUTES.length).toBeGreaterThanOrEqual(12);
+    // 13 English pages + 13 Hindi twins + the two year routes.
+    expect(ROUTES.length).toBeGreaterThanOrEqual(28);
   });
 
   for (const f of ROUTES) {
     it(`${f}: has a heading and declares at most one`, () => {
-      const src = read(f);
+      const src = headingSource(f);
       const own = (src.match(/<h1\b/g) || []).length;
       const viaComponent = src.includes('<PageHeading') ? 1 : 0;
       // Home carries two <h1>s on purpose: an sr-only one on the error branch and the visible
       // headline on the ready branch. They sit in mutually exclusive {#if}/{:else} branches.
-      const max = f === 'routes/+page.svelte' ? 2 : 1;
+      const max = f === 'routes/+page.svelte' || f === 'routes/hi/+page.svelte' ? 2 : 1;
       expect(own + viaComponent, `${f} declares ${own + viaComponent} h1s`).toBeGreaterThanOrEqual(1);
       expect(own + viaComponent, `${f} declares ${own + viaComponent} h1s`).toBeLessThanOrEqual(max);
     });

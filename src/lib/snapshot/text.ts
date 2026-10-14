@@ -6,6 +6,7 @@
 
 import { t, type Lang } from '$lib/i18n';
 import { fmt } from '$lib/utils/format';
+import { localePath } from '$lib/lang/url';
 import { formatIstDate } from './ist';
 import type {
   CommitteeFacts,
@@ -15,6 +16,7 @@ import type {
   HomeFacts,
   LoansFacts,
   PageFacts,
+  YearPack,
 } from './facts';
 import { MIN_VILLAGE_CONTRIBUTORS } from './facts';
 
@@ -41,6 +43,8 @@ export interface TextModel {
   blocks: Block[];
   /** A single related page, e.g. the loan rules under the loans figures. */
   seeAlso?: { href: string; label: string };
+  /** Links to the year pages, on the Home text. Hrefs are in the text's language. */
+  years?: { title: string; items: { href: string; label: string }[] };
 }
 
 /** 2.1 -> "2.1", 2 -> "2", 2.456 -> "2.46": a rate is never padded with zeros. */
@@ -64,7 +68,7 @@ function scopeOf(facts: PageFacts): string {
   return facts.kind === 'decade' ? `${facts.startYear} → ${facts.endYear}` : String(facts.year);
 }
 
-function homeBlocks(f: HomeFacts, lang: Lang): Block[] {
+function homeBlocks(f: HomeFacts, lang: Lang, withDecade = true): Block[] {
   const T = (key: string, vars?: Record<string, string | number>) => t(lang, key, vars);
   const decade = p(T('acc_home_decade', {
     start: f.decade.startYear,
@@ -75,7 +79,7 @@ function homeBlocks(f: HomeFacts, lang: Lang): Block[] {
 
   const empty =
     f.contributors === 0 && f.collected === 0 && f.expenseCount === 0 && f.loanCount === 0 && f.pastLoanReturned === 0;
-  if (empty) return [p(T('acc_home_people_none', { year: f.year })), decade];
+  if (empty) return [p(T('acc_home_people_none', { year: f.year })), ...(withDecade ? [decade] : [])];
 
   return [
     f.contributors === 0
@@ -110,7 +114,8 @@ function homeBlocks(f: HomeFacts, lang: Lang): Block[] {
     f.available >= 0
       ? p(T('acc_home_available', { available: fmt(f.available) }))
       : p(T('acc_home_overspent', { overspent: fmt(-f.available) })),
-    decade,
+    // A year page is about one year; the ten-year line belongs to the Home text.
+    ...(withDecade ? [decade] : []),
   ];
 }
 
@@ -124,7 +129,7 @@ function expensesBlocks(f: ExpensesFacts, lang: Lang): Block[] {
   ];
 }
 
-function loansBlocks(f: LoansFacts, lang: Lang): Block[] {
+function loansBlocks(f: LoansFacts, lang: Lang, namesNote: boolean): Block[] {
   if (f.count === 0) return [p(t(lang, 'acc_home_loans_none', { year: f.year }))];
   const out: Block[] = [
     p(t(lang, 'acc_loans_total', { year: f.year, count: f.count, principal: fmt(f.principal) })),
@@ -140,20 +145,20 @@ function loansBlocks(f: LoansFacts, lang: Lang): Block[] {
     out.push(p(t(lang, 'acc_loans_terms', { rate, tenure })));
   }
   out.push(p(t(lang, 'acc_loans_repayable', { repayable: fmt(f.repayable) })));
-  out.push(p(t(lang, 'acc_names_note')));
+  if (namesNote) out.push(p(t(lang, 'acc_names_note')));
   return out;
 }
 
-function committeeBlocks(f: CommitteeFacts, lang: Lang): Block[] {
+function committeeBlocks(f: CommitteeFacts, lang: Lang, namesNote: boolean): Block[] {
   if (f.count === 0) return [p(t(lang, 'acc_com_none', { year: f.year }))];
   return [
     p(t(lang, 'acc_com_total', { year: f.year, members: noun(lang, 'acc_n_members', f.count) })),
     list(f.roles.map((r) => `${lang === 'hi' ? r.role.hi : r.role.en}: ${r.count}`), t(lang, 'acc_com_roles_h')),
-    p(t(lang, 'acc_names_note')),
+    ...(namesNote ? [p(t(lang, 'acc_names_note'))] : []),
   ];
 }
 
-function contributorsBlocks(f: ContributorsFacts, lang: Lang): Block[] {
+function contributorsBlocks(f: ContributorsFacts, lang: Lang, namesNote: boolean): Block[] {
   if (f.contributors === 0) return [p(t(lang, 'acc_home_people_none', { year: f.year }))];
   const out: Block[] = [p(t(lang, 'acc_con_total', { year: f.year, people: noun(lang, 'acc_n_people', f.contributors) }))];
   if (f.moneyGivers > 0) {
@@ -173,7 +178,7 @@ function contributorsBlocks(f: ContributorsFacts, lang: Lang): Block[] {
     if (f.otherVillages > 0) items.push(`${t(lang, 'acc_con_other_villages')}: ${f.otherVillages}`);
     out.push(list(items, t(lang, 'acc_con_villages_h', { min: MIN_VILLAGE_CONTRIBUTORS })));
   }
-  out.push(p(t(lang, 'acc_names_note')));
+  if (namesNote) out.push(p(t(lang, 'acc_names_note')));
   return out;
 }
 
@@ -190,28 +195,87 @@ function decadeBlocks(f: DecadeFacts, lang: Lang): Block[] {
   ];
 }
 
+function noteFor(scope: string, lang: Lang, source: Source): string {
+  return source.kind === 'live'
+    ? t(lang, 'acc_note_live', { scope })
+    : t(lang, `acc_note_${source.kind}`, { scope, date: formatIstDate(source.asOf, lang) });
+}
+
+/**
+ * The sentences for one page's facts.
+ *
+ * A year page stitches five of these together, so it asks for two things to be left out: the
+ * ten-year line (that belongs to the Home text) and the "names are not repeated" note, which it
+ * says once for the whole page instead of under each of three sections.
+ */
+export function blocksOf(facts: PageFacts, lang: Lang, opts: { decade?: boolean; namesNote?: boolean } = {}): Block[] {
+  const namesNote = opts.namesNote !== false;
+  switch (facts.kind) {
+    case 'home': return homeBlocks(facts, lang, opts.decade !== false);
+    case 'expenses': return expensesBlocks(facts, lang);
+    case 'loans': return loansBlocks(facts, lang, namesNote);
+    case 'committee': return committeeBlocks(facts, lang, namesNote);
+    case 'contributors': return contributorsBlocks(facts, lang, namesNote);
+    case 'decade': return decadeBlocks(facts, lang);
+  }
+}
+
+/** The years of the decade that have a contribution on record, newest first. */
+function recordedYears(f: DecadeFacts): number[] {
+  return f.years.filter((r) => r.hasRecords).map((r) => r.year).sort((a, b) => b - a);
+}
+
 /** The written-up accounts for one page, in one language. */
 export function accountsText(facts: PageFacts, lang: Lang, source: Source): TextModel {
-  const scope = scopeOf(facts);
-  const note =
-    source.kind === 'live'
-      ? t(lang, 'acc_note_live', { scope })
-      : t(lang, `acc_note_${source.kind}`, { scope, date: formatIstDate(source.asOf, lang) });
-
-  let blocks: Block[];
-  let seeAlso: TextModel['seeAlso'];
-  switch (facts.kind) {
-    case 'home': blocks = homeBlocks(facts, lang); break;
-    case 'expenses': blocks = expensesBlocks(facts, lang); break;
-    case 'loans':
-      blocks = loansBlocks(facts, lang);
-      seeAlso = { href: '/loan-rules', label: t(lang, 'loan_rules_subtitle') };
-      break;
-    case 'committee': blocks = committeeBlocks(facts, lang); break;
-    case 'contributors': blocks = contributorsBlocks(facts, lang); break;
-    case 'decade': blocks = decadeBlocks(facts, lang); break;
+  const model: TextModel = {
+    heading: t(lang, 'acc_title'),
+    note: noteFor(scopeOf(facts), lang, source),
+    blocks: blocksOf(facts, lang),
+  };
+  if (facts.kind === 'loans') model.seeAlso = { href: localePath('/loan-rules', lang), label: t(lang, 'loan_rules_subtitle') };
+  // Each year has a page of its own; the Home and Decade texts are where a reader (or a crawler)
+  // is sent to find them.
+  const linked = facts.kind === 'home' ? facts.years : facts.kind === 'decade' ? recordedYears(facts) : [];
+  if (linked.length > 0) {
+    model.years = {
+      title: t(lang, 'acc_by_year_h'),
+      items: linked.map((y) => ({ href: localePath(`/${y}`, lang), label: String(y) })),
+    };
   }
-  return { heading: t(lang, 'acc_title'), note, blocks, seeAlso };
+  return model;
+}
+
+// ----------------------------------------------------------------------------- a year page
+
+export interface YearTextModel {
+  /** "Chhath Puja 2025" */
+  heading: string;
+  note: string;
+  /** Said once for the whole page: no names are repeated here. */
+  footnote: string;
+  /** The committee's paragraph about the year, when it has one. */
+  story: { title: string; content: string } | null;
+  sections: { id: 'overview' | 'contributors' | 'expenses' | 'loans' | 'committee'; title: string; blocks: Block[] }[];
+}
+
+/** The page for one year: every section the individual pages have, for that year, in one place. */
+export function yearText(pack: YearPack, lang: Lang, source: Source): YearTextModel {
+  const pick = (v: { en: string; hi: string }) => (lang === 'hi' ? v.hi : v.en);
+  return {
+    heading: t(lang, 'year_title', { year: pack.year }),
+    note: noteFor(String(pack.year), lang, source),
+    footnote: t(lang, 'acc_names_note'),
+    story: pack.story ? { title: pick(pack.story.title), content: pick(pack.story.content) } : null,
+    // The section titles are the short nav words (Contributors, Expenses, Loans, Committee): on a
+    // page about ONE year, "Active Committee" or "Surplus Loan Distribution" would be the wrong size.
+    sections: [
+      { id: 'overview', title: t(lang, 'year_overview_h'), blocks: blocksOf(pack.home, lang, { decade: false }) },
+      { id: 'contributors', title: t(lang, 'summary_contributors'), blocks: blocksOf(pack.contributors, lang, { namesNote: false }) },
+      { id: 'expenses', title: t(lang, 'nav_expenses'), blocks: blocksOf(pack.expenses, lang) },
+      { id: 'loans', title: t(lang, 'nav_loans'), blocks: blocksOf(pack.loans, lang, { namesNote: false }) },
+      { id: 'committee', title: t(lang, 'nav_committee'), blocks: blocksOf(pack.committee, lang, { namesNote: false }) },
+    ],
+  };
 }
 
 /**
@@ -228,8 +292,32 @@ export function modelToMarkdown(model: TextModel, siteUrl: string, lang: Lang): 
       out.push('');
     }
   }
-  if (model.seeAlso) {
-    out.push(`${t(lang, 'acc_see_also')}: [${model.seeAlso.label}](${siteUrl.replace(/\/+$/, '')}${model.seeAlso.href})`, '');
+  const base = siteUrl.replace(/\/+$/, '');
+  if (model.years) {
+    out.push(`**${model.years.title}**`, '');
+    out.push(model.years.items.map((i) => `[${i.label}](${base}${i.href})`).join(' · '), '');
   }
+  if (model.seeAlso) {
+    out.push(`${t(lang, 'acc_see_also')}: [${model.seeAlso.label}](${base}${model.seeAlso.href})`, '');
+  }
+  return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+/** A year page as Markdown (for llms-full.txt): an H3 per section, under the caller's H2. */
+export function yearModelToMarkdown(model: YearTextModel): string {
+  const out: string[] = [`_${model.note}_`, ''];
+  if (model.story) out.push(`**${model.story.title}**`, '', model.story.content, '');
+  for (const sec of model.sections) {
+    out.push(`### ${sec.title}`, '');
+    for (const b of sec.blocks) {
+      if (b.kind === 'p') out.push(b.text, '');
+      else {
+        if (b.title) out.push(`**${b.title}**`, '');
+        for (const i of b.items) out.push(`- ${i}`);
+        out.push('');
+      }
+    }
+  }
+  out.push(model.footnote, '');
   return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
