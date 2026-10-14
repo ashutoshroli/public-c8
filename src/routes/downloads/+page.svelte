@@ -5,7 +5,7 @@
   import ErrorState from '$lib/components/ErrorState.svelte';
   import { portalState } from '$lib/stores/portal';
   import { tr, lang } from '$lib/stores/lang';
-  import { villages, peopleInVillage, downloadsForPerson } from '$lib/api/derive';
+  import { villageOptions, peopleInVillage, downloadsForPerson } from '$lib/api/derive';
   import type { UserRow } from '$lib/api/schema';
   import { initials, avatarGradient, safeUrl } from '$lib/utils/format';
 
@@ -14,7 +14,9 @@
   let query = $state('');
   let selected = $state<UserRow | null>(null);
 
-  let villageList = $derived(villages($portalState.data, $lang));
+  // `value` is the village's English name in BOTH languages (it is what people are matched on);
+  // only the label follows the language.
+  let villageList = $derived(villageOptions($portalState.data, $lang));
   // The people list only appears AFTER the visitor searches: picking a village alone
   // must not dump everyone. Needs a village + a non-empty query.
   let searchQuery = $derived(query.trim());
@@ -82,7 +84,7 @@
   <div class="surface mb-4 space-y-2 p-3">
     <select class="chip !h-10 w-full" bind:value={village} aria-label={$tr('select_village')}>
       <option value="">{$tr('select_village')}</option>
-      {#each villageList as v}<option value={v}>{v}</option>{/each}
+      {#each villageList as v (v.value)}<option value={v.value}>{v.label}</option>{/each}
     </select>
     {#if village}
       <label class="relative block">
