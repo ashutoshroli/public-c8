@@ -16,6 +16,14 @@ SvelteKit 2 + Svelte 5 + TypeScript + Tailwind, `adapter-static` (fallback `404.
 Every page also exists in Hindi under `/hi` (`/hi`, `/hi/expenses`, …), and every year that has
 records has a page of its own: `/2025`, `/hi/2025` (see *Two languages, one page per year*).
 
+`/verify?record=<docType>-<year>-<ref>` is what the QR on every receipt and certificate opens. It says
+whether the committee really issued that document (the id must be in the generated-files list), shows
+who and how much to check against the paper, and — for a receipt, work receipt, certificate or material
+receipt — a **Download PDF** button with the file's link (the same link the Download Center offers, opened
+in a new tab). Loan-consent documents verify but get no button. A document appears here only once its PDF
+has been generated in the mgmt portal; until then the Download Center says "Not Available" and a scan
+cannot verify.
+
 ## Structure
 ```
 src/lib/

@@ -7,7 +7,7 @@
    * committee's generated_files and resolves the underlying collections row, so
    * the visitor can confirm the paper in their hand is genuine.
    */
-  import { ShieldCheck, ShieldX, ShieldQuestion, RefreshCw, ArrowLeft } from '@lucide/svelte';
+  import { ShieldCheck, ShieldX, ShieldQuestion, RefreshCw, ArrowLeft, FileDown } from '@lucide/svelte';
   import { browser } from '$app/environment';
   import { page } from '$app/stores';
   import { portalState, refreshPortal } from '$lib/stores/portal';
@@ -175,6 +175,22 @@
         </div>
       {:else if verdict === 'not-found'}
         <p class="mt-3 text-muted">{$tr('verify_help')}</p>
+      {/if}
+
+      {#if verdict === 'verified' && result.fileLink}
+        <!--
+          The document the QR belongs to, as the PDF the committee issued: the same link the Download
+          Center offers for it. Shown only for a verified record (never on "not found" or on a result
+          we cannot stand behind) and only for receipts and certificates — see VerifyResult.fileLink.
+          The file lives on another host, so it opens in a new tab, where the browser's own viewer has
+          the save button.
+        -->
+        <div class="mt-4 border-t border-line pt-3">
+          <a class="btn-primary" href={result.fileLink} target="_blank" rel="noopener noreferrer">
+            <FileDown class="h-4 w-4" aria-hidden="true" />
+            {$tr('verify_download_pdf')}
+          </a>
+        </div>
       {/if}
     </section>
   {/if}
