@@ -75,7 +75,10 @@ function sameOriginPath(raw, origin) {
 
 var DEFAULT_TITLE = 'Chhath Puja';
 var DEFAULT_ICON = '/icons/icon-192.png';
-var DEFAULT_BADGE = '/icons/icon-192.png';
+// The status-bar badge. Android draws it from its ALPHA CHANNEL ONLY, as a flat white shape, so
+// it must be a simple glyph on a transparent background. It used to be icon-192.png (the full
+// colour emblem), which Android flattens into a solid white blob. (scripts/gen-seo-assets.mjs)
+var DEFAULT_BADGE = '/icons/badge-96.png';
 
 // ---- notification inbox (IndexedDB) ----------------------------------------
 //

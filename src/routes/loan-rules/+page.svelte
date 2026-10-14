@@ -58,7 +58,7 @@
   <title>{$tl('loan_rules_subtitle')} — {$tl('app_title')}</title>
 </svelte:head>
 
-<PageHeading titleKey="app_subtitle" subtitle={$tl('loan_rules_subtitle')} />
+<PageHeading titleKey="loan_rules_subtitle" subtitle={$tl('org_name')} />
 
 <article class="surface space-y-3 p-5 text-sm leading-relaxed text-ink">
   <p>{$tl('lr_intro_1')}</p>

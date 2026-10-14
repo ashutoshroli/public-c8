@@ -2,12 +2,13 @@
 <html lang="en" class="scroll-smooth">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%sveltekit.assets%/favicon.svg" />
+    <!-- Icons: Google Search reads ICO/PNG favicons but not SVG, hence the .ico (sizes="32x32" makes
+         Chrome prefer the SVG when both exist). apple-touch-icon is opaque: iOS paints transparency
+         black. The web manifest link comes from +layout.svelte, not from here. -->
+    <link rel="icon" href="%sveltekit.assets%/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="%sveltekit.assets%/favicon.svg" type="image/svg+xml" />
     <link rel="mask-icon" href="%sveltekit.assets%/favicon.svg" color="#0b6b4f" />
-    <link rel="apple-touch-icon" href="%sveltekit.assets%/icons/icon-180.png" />
-    <!-- Static manifest link so crawlers / PWABuilder see it pre-hydration; the
-         layout also injects the @vite-pwa/sveltekit-generated link at runtime. -->
-    <link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="%sveltekit.assets%/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

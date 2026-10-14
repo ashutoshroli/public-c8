@@ -36,6 +36,7 @@ async function maskable(size) {
 
 await plain(192);
 await plain(512);
-await plain(180); // apple-touch
 await maskable(512);
+// The iOS home-screen icon is NOT generated here any more: a transparent 180px icon renders on a
+// black square. It is derived from the opaque maskable icon by scripts/gen-seo-assets.mjs.
 console.log('icons generated in', outDir);

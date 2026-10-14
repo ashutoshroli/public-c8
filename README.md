@@ -7,7 +7,7 @@ Navyuvak Chhath Puja Samiti (Shaharpura, Gardih) ka public transparency portal.
 > use hota hai. Backend / Cloudflare Worker **unchanged** hai.
 
 ## Stack
-SvelteKit 2 + Svelte 5 + TypeScript + Tailwind, `adapter-static` (SPA fallback `200.html`), PWA.
+SvelteKit 2 + Svelte 5 + TypeScript + Tailwind, `adapter-static` (fallback `404.html`, so an unknown URL gets a real HTTP 404), PWA.
 
 ## Routes
 `/` Home · `/contributors` · `/expenses` · `/loans` · `/committee` · `/downloads` ·
@@ -21,6 +21,19 @@ src/lib/
   components/  Shell (header, nav, footer) · MoreMenu · LiveScroll · Modal · states
   utils/       format · ranking · drive · decadeData
 src/routes/    ek page = ek folder, seedha design + derive functions
+```
+
+## Search, previews and PWA files
+Page metadata (title key, description, noindex) lives in one table, `src/lib/seo.ts` (`ROUTES`);
+the sitemap, `llms.txt`, canonical tags and structured data are all generated from it, so a new
+page only needs one entry. `/verify` is `noindex` (it is the receipt-QR page) and stays out of the
+sitemap. `static/robots.txt` welcomes every crawler by name.
+
+Images that crawlers, link previews and phones fetch by name are generated, then committed:
+```sh
+node scripts/gen-seo-assets.mjs   # og-image, apple-touch-icon, favicon.ico, badge-96, monochrome icon
+node scripts/gen-icons.mjs        # PWA icons from static/logo.svg
+node scripts/gen-screenshots.mjs  # app-listing screenshots
 ```
 
 ## Design tokens
