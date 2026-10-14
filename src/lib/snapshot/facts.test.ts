@@ -19,7 +19,7 @@ import {
   storyFor, storyWithheld, type PageKey,
 } from './facts';
 import { accountsText, modelToMarkdown, yearText, yearModelToMarkdown } from './text';
-import { buildNameGuard } from './redact';
+import { buildNameGuard, APPROVED_ORGANISATIONS } from './redact';
 import { istDate, istYear, formatIstDate } from './ist';
 
 const NOW = new Date('2026-10-14T06:00:00Z'); // 11:30 IST on 14 Oct 2026
@@ -780,5 +780,103 @@ describe('the name guard is not fooled by what sits next to a name', () => {
     expect(guard.mentionsPersonOrContact('Tent from Ram Kumar, advance')).toBe(true);
     expect(guard.mentionsPersonOrContact('तम्बू: राम कुमार।')).toBe(true);
     expect(guard.mentionsPersonOrContact('Tent, banner and lights')).toBe(false);
+  });
+});
+
+
+describe('organisations the committee has approved by name', () => {
+  // The contributors list holds institutions too. One of them (a school that lent its sound system
+  // for the ghat) is thanked in the committee's own story of 2017, and the committee has said that
+  // may be published. Nothing else is freed by that.
+  const school = { ID: 'USER0040', Name: 'Genius Public School', 'Name (Hindi)': 'जीनियस पब्लिक स्कूल', Village: 'Shaharpura', Designation: 'School' };
+  const otherSchool = { ID: 'USER0041', Name: 'POLESTAR PUBLIC SCHOOL', 'Name (Hindi)': 'पोलस्टार पब्लिक स्कूल', Designation: 'School' };
+  const person = { ID: 'USER0042', Name: 'Ravi Verma', 'Name (Hindi)': 'रवि वर्मा', Village: 'Shaharpura' };
+  const story2017 = {
+    year: 2017, title_en: '2017 — A New Beginning', title_hi: '2017 — एक नई शुरुआत',
+    content_en: 'In 2017 the youth came together. That same year, Genius Public School allowed its entire sound system to be used at the Chhath ghat, an important support for the event.',
+    content_hi: 'इसी वर्ष Genius Public School ने अपना पूरा sound system छठ घाट पर उपयोग करने की अनुमति दी, जिससे आयोजन को महत्वपूर्ण सहयोग मिला।',
+  };
+  const build = (users: object[], journeyEntries: object[] = [story2017]) => parsePortalData({
+    users,
+    collections: [
+      { Name: 'USER0040', Year: 2017, Amount: 0, 'Contribution Type': '2' },
+      { Name: 'USER0042', Year: 2017, Amount: 700, 'Contribution Type': '1' },
+      { Name: 'USER0040', Year: 2025, Amount: 1251, 'Contribution Type': '1' },
+      { Name: 'USER0042', Year: 2025, Amount: 300, 'Contribution Type': '1' },
+    ],
+    expenses: [{ Year: 2017, Discription: 'Genius Public School sound system', 'Discription (Hindi)': 'साउंड सिस्टम', Amount: 650 }],
+    journeyEntries,
+  })!;
+
+  it('the list is exactly what the committee approved: one organisation', () => {
+    // Adding a name here is a decision. This test makes it a visible one.
+    expect(APPROVED_ORGANISATIONS).toEqual(['Genius Public School']);
+  });
+
+  it('the 2017 story that thanks the school is published, in both languages', () => {
+    const data = build([school, otherSchool, person]);
+    const story = storyFor(data, 2017)!;
+    expect(story).not.toBeNull();
+    expect(story.content.en).toContain('Genius Public School allowed its entire sound system');
+    expect(story.content.hi).toContain('Genius Public School ने अपना पूरा sound system');
+    expect(storyWithheld(data, 2017)).toBe(false);
+    expect(yearPack(data, 2017, NOW).story).toEqual(story);
+  });
+
+  it('the school’s name is free in either script, whole or in the Hindi spelling', () => {
+    const guard = buildNameGuard(build([school, person]).users);
+    expect(guard.mentionsFullNameOrContact('Genius Public School, Shaharpura')).toBe(false);
+    expect(guard.mentionsFullNameOrContact('जीनियस पब्लिक स्कूल ने सहयोग दिया।')).toBe(false);
+    expect(guard.mentionsFullNameOrContact('GENIUS PUBLIC SCHOOL')).toBe(false);
+  });
+
+  it('is exactly that: it frees no other organisation and no person', () => {
+    const guard = buildNameGuard(build([school, otherSchool, person]).users);
+    expect(guard.mentionsFullNameOrContact('We thank POLESTAR PUBLIC SCHOOL for the lights.')).toBe(true);
+    expect(guard.mentionsFullNameOrContact('पोलस्टार पब्लिक स्कूल को धन्यवाद।')).toBe(true);
+    expect(guard.mentionsFullNameOrContact('We thank Ravi Verma.')).toBe(true);
+    // ... and a story that thanks the school AND a person is still held back.
+    const data = build([school, person], [{ ...story2017, content_en: `${story2017.content_en} Ravi Verma led the work.` }]);
+    expect(storyFor(data, 2017)).toBeNull();
+    expect(storyWithheld(data, 2017)).toBe(true);
+  });
+
+  it('does not look at what a name looks like: an institution that is not on the list stays guarded', () => {
+    for (const name of ['POLESTAR PUBLIC SCHOOL', 'APEX INTERNATIONAL SCHOOL', 'Some Charitable Trust']) {
+      const guard = buildNameGuard([{ ID: 'U1', Name: name }]);
+      expect(guard.mentionsFullNameOrContact(`Thanks to ${name}.`), name).toBe(true);
+    }
+  });
+
+  it('a person who merely shares a word with the school is still guarded', () => {
+    const guard = buildNameGuard([school, { ID: 'USER0043', Name: 'Genius Kumar' }] as never);
+    expect(guard.mentionsFullNameOrContact('Thanks to Genius Kumar.')).toBe(true);
+    expect(guard.mentionsFullNameOrContact('Thanks to Genius Public School.')).toBe(false);
+  });
+
+  it('it is the NAME that is freed, not the record: nothing else about the school reaches the pack', () => {
+    const data = build([school, otherSchool, person]);
+    const pack = yearPack(data, 2017, NOW);
+    const rest = JSON.stringify({ ...pack, story: null });
+    for (const s of ['Genius', 'जीनियस', 'USER0040', 'Public School']) expect(rest, s).not.toContain(s);
+    // The school is one of the contributors, counted, and that is all the pack says about it.
+    expect(pack.contributors.contributors).toBe(2);
+    // Its 2025 gift (₹1,251) is not published as the school's: the year totals are all there is.
+    const p25 = JSON.stringify(yearPack(data, 2025, NOW));
+    expect(p25).not.toContain('Genius');
+    expect(p25).not.toContain('"USER0040"');
+  });
+
+  it('a short expense line naming the school is published as written — it is only the school’s own words that stopped holding it back', () => {
+    const f = expensesFacts(build([school, person]), 2017);
+    expect(f.items.map((i) => i.label.en)).toEqual(['Genius Public School sound system']);
+    expect(f.folded.count).toBe(0);
+  });
+
+  it('with nothing approved, the same story is held back — the list is what changes it', () => {
+    const data = build([school, person]);
+    const strict = buildNameGuard(data.users, []);
+    expect(strict.mentionsFullNameOrContact(story2017.content_en)).toBe(true);
+    expect(buildNameGuard(data.users).mentionsFullNameOrContact(story2017.content_en)).toBe(false);
   });
 });

@@ -102,6 +102,12 @@ rules apply: no names, no individual amounts. The year story is left out if it c
 name of anyone in the contributors list, a phone number or an email — the build log lists any it held
 back, and a published story is the committee's own text, so read them once at `/<year>`.
 
+The contributors list also holds institutions. An organisation the committee has **approved by name**
+may be thanked in a story: today only *Genius Public School* (2017's story). The list is
+`APPROVED_ORGANISATIONS` in `src/lib/snapshot/redact.ts`; nothing is inferred from how a name looks, so
+another school or trust stays guarded until it is added there, in a PR. Only the name is freed — never
+the organisation's own record (what it gave, when).
+
 `/hi/llms-full.txt` is the Hindi version of `/llms-full.txt` (both now include a section per year).
 
 Code: `src/lib/lang/url.ts` (language ↔ address), `src/lib/stores/lang.ts`,
