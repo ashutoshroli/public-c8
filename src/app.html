@@ -18,18 +18,31 @@
     <!-- Language = address (/hi/… is Hindi; src/lib/lang/url.ts). Before first paint: a Hindi address gets
          lang="hi" (the offline shell is one file for every address), and a visitor who chose Hindi on
          an earlier visit (localStorage) is taken from an English PAGE address to its /hi twin. Files are
-         never redirected; crawlers have no storage. The flag stops the analytics snippet below from
-         counting the page that is being left. Tested by src/lib/lang/app-html-script.test.ts. -->
+         never redirected; crawlers have no storage. The old WhatsApp/e-mail link /#downloads goes to the
+         Downloads page. The flag stops the analytics snippet below from counting the page that is being
+         left. Tested by src/lib/lang/app-html-script.test.ts. -->
     <script>
       (function () {
         try {
           var p = location.pathname;
+          var old = (p === '/' || p === '/hi') && location.hash.toLowerCase() === '#downloads';
           if (p === '/hi' || p.indexOf('/hi/') === 0) {
             document.documentElement.setAttribute('lang', 'hi');
+            if (old) {
+              window.__cpmRedirecting = true;
+              location.replace('/hi/downloads' + location.search);
+            }
             return;
           }
           if (/\.[A-Za-z0-9]+$/.test(p) || p.indexOf('/.well-known/') === 0) return;
-          if (localStorage.getItem('cpm_public_lang') === 'hi') {
+          var hindi = false;
+          try { hindi = localStorage.getItem('cpm_public_lang') === 'hi'; } catch (e) {}
+          if (old) {
+            window.__cpmRedirecting = true;
+            location.replace((hindi ? '/hi' : '') + '/downloads' + location.search);
+            return;
+          }
+          if (hindi) {
             window.__cpmRedirecting = true;
             location.replace('/hi' + (p === '/' ? '' : p) + location.search + location.hash);
           }

@@ -172,6 +172,69 @@ describe('a file is never redirected', () => {
   });
 });
 
+describe('the old link to the home page’s #downloads', () => {
+  // The WhatsApp and e-mail templates still send https://…/#downloads, from when the Downloads
+  // section was part of the home page. In this portal Downloads is a page of its own, and the
+  // fragment would otherwise land people on the home page with nothing to say where they went.
+
+  it('opens the Downloads page for a visitor with no saved language', () => {
+    for (const stored of [null, 'en'] as const) {
+      const r = run(LANG_SCRIPT, '/#downloads', stored);
+      expect(r.replaced, `stored ${stored}`).toEqual(['/downloads']);
+      expect(r.redirecting).toBe(true);
+    }
+  });
+
+  it('opens the HINDI Downloads page for a visitor who chose Hindi — in one step, not via /hi#downloads', () => {
+    const r = run(LANG_SCRIPT, '/#downloads', 'hi');
+    expect(r.replaced).toEqual(['/hi/downloads']);
+  });
+
+  it('works on the Hindi home page too, and keeps the page Hindi', () => {
+    const r = run(LANG_SCRIPT, '/hi#downloads', null);
+    expect(r.replaced).toEqual(['/hi/downloads']);
+    expect(r.htmlLang).toBe('hi');
+    expect(r.redirecting).toBe(true);
+  });
+
+  it('keeps the query (a campaign tag on the link) and drops the fragment it has just used', () => {
+    expect(run(LANG_SCRIPT, '/?utm_source=whatsapp#downloads', null).replaced).toEqual(['/downloads?utm_source=whatsapp']);
+    expect(run(LANG_SCRIPT, '/?utm_source=whatsapp#downloads', 'hi').replaced).toEqual(['/hi/downloads?utm_source=whatsapp']);
+  });
+
+  it('does not mind how it is capitalised', () => {
+    expect(run(LANG_SCRIPT, '/#Downloads', null).replaced).toEqual(['/downloads']);
+  });
+
+  it('goes where lib/lang/url.ts says the Downloads page is, in either language', () => {
+    expect(run(LANG_SCRIPT, '/#downloads', null).replaced).toEqual([localePath('/downloads', 'en')]);
+    expect(run(LANG_SCRIPT, '/#downloads', 'hi').replaced).toEqual([localePath('/downloads', 'hi')]);
+  });
+
+  it('still works when storage is blocked: the link does not depend on the saved language', () => {
+    const r = run(LANG_SCRIPT, '/#downloads', 'throw');
+    expect(r.replaced).toEqual(['/downloads']);
+  });
+
+  it('touches nothing else: other fragments, other pages and files go the ordinary way', () => {
+    // No saved language: left alone.
+    for (const url of ['/#contributors', '/#', '/expenses#downloads', '/loans#downloads', '/hi/expenses#downloads', '/robots.txt#downloads', '/downloads#downloads']) {
+      expect(run(LANG_SCRIPT, url, null).replaced, url).toEqual([]);
+    }
+    // Saved Hindi: only the ordinary language redirect, with the fragment kept.
+    expect(run(LANG_SCRIPT, '/expenses#downloads', 'hi').replaced).toEqual(['/hi/expenses#downloads']);
+    expect(run(LANG_SCRIPT, '/#contributors', 'hi').replaced).toEqual(['/hi#contributors']);
+    expect(run(LANG_SCRIPT, '/robots.txt#downloads', 'hi').replaced).toEqual([]);
+  });
+
+  it('raises the redirect flag, so analytics does not count the page it leaves', () => {
+    expect(run(GTM_SCRIPT, '/#downloads', null, { 'ls:cpm_analytics_consent': 'granted' }).window.__cpmGtmLoaded).toBe(true);
+    const r = run(LANG_SCRIPT, '/#downloads', null);
+    const after = run(GTM_SCRIPT, '/#downloads', null, { 'ls:cpm_analytics_consent': 'granted', __cpmRedirecting: r.redirecting });
+    expect(after.window.__cpmGtmLoaded).toBeUndefined();
+  });
+});
+
 describe('the analytics snippet does not count a page that is being left', () => {
   const CONSENT = { 'ls:cpm_analytics_consent': 'granted' };
 
