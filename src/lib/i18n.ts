@@ -297,6 +297,7 @@ export const T: Record<Lang, Dict> = {
       'That is not a valid record id. Scan the QR code printed on your receipt or certificate instead.',
     verify_stale_note:
       'Checked against the saved copy on this device — refresh to confirm against the live records.',
+    verify_download_pdf: 'Download PDF',
     year: 'Year',
     amount: 'Amount',
     detail: 'Detail',
@@ -903,6 +904,7 @@ export const T: Record<Lang, Dict> = {
       'यह मान्य record id नहीं है। कृपया अपनी रसीद या प्रमाणपत्र पर छपा QR code scan करें।',
     verify_stale_note:
       'इस डिवाइस पर सहेजी गई प्रति से जाँचा गया — लाइव अभिलेखों से पुष्टि के लिए रिफ़्रेश करें।',
+    verify_download_pdf: 'PDF डाउनलोड करें',
     year: 'वर्ष',
     amount: 'राशि',
     detail: 'विवरण',

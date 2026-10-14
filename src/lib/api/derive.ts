@@ -21,7 +21,7 @@
  * before) but computed entirely from real collection amounts.
  */
 import { committeeGuarantorBanned } from '$lib/loanRules';
-import { parseAmt } from '$lib/utils/format';
+import { parseAmt, safeUrl } from '$lib/utils/format';
 import { rowField } from './rowField';
 import { competitionRank, type Ranked } from '$lib/utils/ranking';
 import type {
@@ -760,6 +760,14 @@ export interface VerifyResult {
   year: string;
   /** true when the id is not in the `docType-year-ref` shape at all */
   malformed: boolean;
+  /**
+   * The document's PDF (the generated file's public link), so the visitor can download what the QR
+   * points at. Set only when the record is verified AND is a collection-backed document (receipt,
+   * work receipt, certificate, material receipt) AND the link is a plain http(s) URL; '' otherwise.
+   * Loan-consent documents never get one here: this page shows nothing else about them, and they
+   * carry a photo and a signature.
+   */
+  fileLink: string;
   /** resolved record details (only for collection-backed, verified ids) */
   details: {
     name: string;
@@ -796,6 +804,7 @@ export function verifyRecord(data: PortalData, recordId: string): VerifyResult {
     docType: '',
     year: '',
     malformed: parts.length < 3,
+    fileLink: '',
     details: null
   };
   if (parts.length < 3) return base;
@@ -809,11 +818,14 @@ export function verifyRecord(data: PortalData, recordId: string): VerifyResult {
   base.docLabelKey = DOC_LABEL_KEYS[docType] || '';
 
   // A record is verified iff a generated file carries exactly this record_id.
-  base.verified = (data.generatedFiles || []).some(
-    (g) => (g.record_id ?? '').toString().trim() === id
-  );
+  const issued = (data.generatedFiles || []).find((g) => (g.record_id ?? '').toString().trim() === id);
+  base.verified = !!issued;
 
-  if (!base.verified || !COLLECTION_DOC_TYPES.includes(docType)) return base;
+  if (!issued || !COLLECTION_DOC_TYPES.includes(docType)) return base;
+
+  // The paper's own PDF, to download. The same link the Download Center offers for this document,
+  // read from the very row that made the record verified.
+  base.fileLink = safeUrl(issued.public_link);
 
   // Resolve the collections row the id was built from, to show the details.
   const wantYear = parseInt(year, 10);
