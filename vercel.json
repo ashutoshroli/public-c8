@@ -24,7 +24,7 @@
       ]
     },
     {
-      "source": "/(.*)\\.(webmanifest|png|svg|xml|txt)",
+      "source": "/(.*)\\.(webmanifest|png|svg|ico|xml|txt)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }
       ]

@@ -28,7 +28,7 @@ import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import {
   ROUTES, canonicalFor, metaFor, normalisePath, sitemapXml,
-  organisationJsonLd, websiteJsonLd,
+  structuredData, indexableRoutes, isIndexable, OG_IMAGE, ogImageUrl,
 } from './seo';
 
 const SRC = resolve(process.cwd(), 'src');
@@ -117,15 +117,40 @@ describe('PR-42: the canonical names the page it is on', () => {
     }
   });
 
-  it('the social image is the wide screenshot, not the square app icon', () => {
+  it('the social image is the purpose-made 1200x630 card, not an app icon or a screenshot', () => {
     const seo = read('lib/components/Seo.svelte');
-    // og:image / twitter:image feed the share card; the 512-square icon fails the
-    // >=1200x630 recommendation, so both point at the 1280x720 screenshot instead.
-    expect(seo, 'og:image/twitter:image must use the wide screenshot').toMatch(/screenshots\/wide\.png/);
-    expect(seo, 'the square app icon is no longer the social image')
-      .not.toMatch(/(og:image|twitter:image)[\s\S]*icon-512\.png/);
-    expect(existsSync(resolve(process.cwd(), 'static/screenshots/wide.png')),
-      'the referenced screenshot must actually exist').toBe(true);
+    // og:image / twitter:image feed the share card. The 512-square icon fails the >=1200x630
+    // recommendation; the 1280x720 app-store screenshot that replaced it is 16:9, so platforms
+    // that crop to 1.91:1 trimmed its edges, and it said nothing about what the page was.
+    expect(seo, 'og:image/twitter:image must come from the shared card definition')
+      .toMatch(/ogImageUrl\(config\.siteUrl\)/);
+    expect(seo).not.toMatch(/screenshots\/wide\.png/);
+    expect(seo).not.toMatch(/icon-512\.png/);
+
+    expect(OG_IMAGE.path).toBe('/og-image.png');
+    expect(ogImageUrl(SITE)).toBe(`${SITE}/og-image.png`);
+    expect(ogImageUrl(`${SITE}/`), 'no doubled slash').toBe(`${SITE}/og-image.png`);
+
+    // The declared size must be the real size: a mismatch makes some scrapers discard the image.
+    const file = resolve(process.cwd(), 'static/og-image.png');
+    expect(existsSync(file), 'the referenced image must actually exist').toBe(true);
+    const png = readFileSync(file);
+    expect(png.readUInt32BE(16), 'width').toBe(OG_IMAGE.width);
+    expect(png.readUInt32BE(20), 'height').toBe(OG_IMAGE.height);
+    expect(OG_IMAGE.width / OG_IMAGE.height).toBeCloseTo(1.91, 1);
+  });
+
+  it('the preview carries the size, type, alt text and locale scrapers read', () => {
+    const seo = read('lib/components/Seo.svelte');
+    for (const tag of [
+      'og:image:type', 'og:image:width', 'og:image:height', 'og:image:alt',
+      'twitter:image:alt', 'og:locale"', 'og:locale:alternate',
+    ]) {
+      expect(seo, `${tag} is not emitted`).toContain(tag);
+    }
+    expect(seo).toContain('en_IN');
+    expect(seo).toContain('hi_IN');
+    expect(OG_IMAGE.alt.length, 'alt text should describe the card, not be empty').toBeGreaterThan(30);
   });
 
   it('exactly one summary_large_image twitter:card exists across app.html + Seo.svelte', () => {
@@ -179,17 +204,29 @@ describe('PR-42: every page describes itself', () => {
 describe('PR-42: the sitemap is generated, so it cannot drift', () => {
   const xml = sitemapXml(SITE);
 
-  it('lists every route exactly once', () => {
-    for (const r of ROUTES) {
+  it('lists every indexable route exactly once', () => {
+    for (const r of indexableRoutes()) {
       const loc = `<loc>${canonicalFor(SITE, r.path)}</loc>`;
       expect(xml.split(loc).length - 1, `${r.path} appears more than once or not at all`).toBe(1);
     }
-    expect((xml.match(/<url>/g) || []).length).toBe(ROUTES.length);
+    expect((xml.match(/<url>/g) || []).length).toBe(indexableRoutes().length);
   });
 
-  it('includes the four routes the hand-written file had lost', () => {
-    for (const p of ['/decade', '/donate', '/guide', '/verify']) {
+  it('includes the routes the hand-written file had lost', () => {
+    // /verify was the fourth of these; it is now deliberately noindex and out of the sitemap
+    // (asserted in the discoverability tests), so only the three real content pages are checked.
+    for (const p of ['/decade', '/donate', '/guide']) {
       expect(xml, `${p} was missing from static/sitemap.xml`).toContain(`<loc>${SITE}${p}</loc>`);
+    }
+  });
+
+  it('leaves out a page that asks not to be indexed', () => {
+    const noindex = ROUTES.filter((r) => r.noindex);
+    expect(noindex.map((r) => r.path), 'the receipt-verification page is the one utility route').toEqual(['/verify']);
+    for (const r of noindex) {
+      expect(xml, `${r.path} is noindex, so listing it contradicts itself`)
+        .not.toContain(`<loc>${canonicalFor(SITE, r.path)}</loc>`);
+      expect(isIndexable(r.path)).toBe(false);
     }
   });
 
@@ -212,32 +249,136 @@ describe('PR-42: the sitemap is generated, so it cannot drift', () => {
 // -------------------------------------------------------------- 5. STRUCTURED DATA
 
 describe('PR-42: structured data is valid and honest', () => {
-  it('the organisation node parses and identifies the committee', () => {
-    const o = JSON.parse(organisationJsonLd(SITE));
-    expect(o['@context']).toBe('https://schema.org');
-    expect(o['@type']).toBe('NGO');
+  type Node = Record<string, unknown> & { '@type': string; '@id': string };
+  const page = {
+    path: '/expenses', name: 'Expenses Ledger — Chhath Puja', description: metaFor('/expenses')!.description,
+    homeLabel: 'Home', pageLabel: 'Expenses Ledger',
+  };
+  const graphOf = (json: string): Node[] => JSON.parse(json)['@graph'];
+  const byType = (g: Node[], type: string) => g.find((n) => n['@type'] === type) as Node;
+
+  it('is one parseable graph in the schema.org context', () => {
+    const doc = JSON.parse(structuredData(SITE, page));
+    expect(doc['@context']).toBe('https://schema.org');
+    expect(Array.isArray(doc['@graph'])).toBe(true);
+  });
+
+  it('the organisation node identifies the committee', () => {
+    const o = byType(graphOf(structuredData(SITE, page)), 'NGO');
     expect(o.name).toBe('Navyuvak Chhath Puja Samiti');
     expect(o.url).toBe(`${SITE}/`);
     expect(o.logo).toBe(`${SITE}/icons/icon-512.png`);
+    expect(o['@id']).toBe(`${SITE}/#organization`);
+    expect(o.foundingDate).toBe('2017');
+    expect(o.email).toBe('chhath@shaharpura.com');
+    // The place, as the main domain's coming-soon page states it.
+    expect(o.address).toMatchObject({ addressLocality: 'Shaharpura, Gardih', addressRegion: 'Jharkhand', addressCountry: 'IN' });
   });
 
-  it('the website node parses and declares both languages', () => {
-    const w = JSON.parse(websiteJsonLd(SITE));
-    expect(w['@type']).toBe('WebSite');
+  it('the website node declares both languages and names the organisation as publisher', () => {
+    const w = byType(graphOf(structuredData(SITE, page)), 'WebSite');
     expect(w.inLanguage).toEqual(['en', 'hi']);
+    expect(w.publisher).toEqual({ '@id': `${SITE}/#organization` });
   });
 
-  it('it publishes no financial figures', () => {
+  it('the page node is this page, inside this site, with a breadcrumb', () => {
+    const g = graphOf(structuredData(SITE, page));
+    const p = byType(g, 'WebPage');
+    expect(p.url).toBe(`${SITE}/expenses`);
+    expect(p['@id']).toBe(`${SITE}/expenses#webpage`);
+    expect(p.name).toBe(page.name);
+    expect(p.description).toBe(page.description);
+    expect(p.isPartOf).toEqual({ '@id': `${SITE}/#website` });
+    expect(p.breadcrumb).toEqual({ '@id': `${SITE}/expenses#breadcrumb` });
+
+    const b = byType(g, 'BreadcrumbList') as Node & { itemListElement: Record<string, unknown>[] };
+    expect(b['@id']).toBe(`${SITE}/expenses#breadcrumb`);
+    expect(b.itemListElement.map((i) => [i.position, i.name, i.item])).toEqual([
+      [1, 'Home', `${SITE}/`],
+      [2, 'Expenses Ledger', `${SITE}/expenses`],
+    ]);
+  });
+
+  it('every @id that is referenced is defined in the same graph', () => {
+    // A dangling reference reads as a different, unknown entity to a consumer.
+    const g = graphOf(structuredData(SITE, page));
+    const defined = new Set(g.map((n) => n['@id']));
+    const refs: string[] = [];
+    const walk = (v: unknown, key = '') => {
+      if (Array.isArray(v)) v.forEach((x) => walk(x, key));
+      else if (v && typeof v === 'object') {
+        const o = v as Record<string, unknown>;
+        const keys = Object.keys(o);
+        if (keys.length === 1 && keys[0] === '@id' && key) refs.push(String(o['@id']));
+        else keys.forEach((k) => walk(o[k], k));
+      }
+    };
+    g.forEach((n) => Object.entries(n).forEach(([k, v]) => walk(v, k)));
+    expect(refs.length, 'the graph should link its nodes').toBeGreaterThanOrEqual(4);
+    for (const r of refs) expect(defined.has(r), `${r} is referenced but never defined`).toBe(true);
+  });
+
+  it('the home page has no breadcrumb: a one-item trail is not one', () => {
+    const g = graphOf(structuredData(SITE, { ...page, path: '', pageLabel: 'Home' }));
+    expect(g.some((n) => n['@type'] === 'BreadcrumbList')).toBe(false);
+    const p = byType(g, 'WebPage');
+    expect(p.url).toBe(`${SITE}/`);
+    expect(p).not.toHaveProperty('breadcrumb');
+  });
+
+  it('a page outside the route table gets the organisation and site but no WebPage', () => {
+    const g = graphOf(structuredData(SITE, null));
+    expect(g.map((n) => n['@type'])).toEqual(['NGO', 'WebSite']);
+  });
+
+  it('it publishes no financial figures and no personal data', () => {
     // Structured data that disagrees with the page is worse than none, and these figures change
-    // daily. If someone adds them later, this fails and they have to argue for it.
-    const both = (organisationJsonLd(SITE) + websiteJsonLd(SITE)).toLowerCase();
-    for (const f of ['amount', 'price', 'totalcollected', 'monetary']) {
-      expect(both, `${f} in JSON-LD would go stale within a day`).not.toContain(f);
+    // daily. If someone adds them later, this fails and they have to argue for it. Checked on the
+    // property NAMES, not on prose: a page description may legitimately say "amounts".
+    const forbidden = new Set([
+      'amount', 'price', 'totalcollected', 'monetaryamount', 'offers', 'aggregaterating',
+      'funder', 'member', 'employee', 'founder', 'person', 'telephone', 'givenname', 'familyname',
+    ]);
+    const names = new Set<string>();
+    const walk = (v: unknown) => {
+      if (Array.isArray(v)) v.forEach(walk);
+      else if (v && typeof v === 'object') {
+        for (const [k, x] of Object.entries(v)) { names.add(k.toLowerCase()); walk(x); }
+      }
+    };
+    for (const p of [page, { ...page, path: '' }]) walk(JSON.parse(structuredData(SITE, p)));
+    for (const n of names) expect(forbidden.has(n), `${n} in JSON-LD would go stale or name a person`).toBe(false);
+    for (const t of ['Person', 'MonetaryAmount', 'Offer', 'FAQPage', 'Event']) {
+      expect(structuredData(SITE, page), `${t} markup is not backed by anything on the page`)
+        .not.toContain(`"@type":"${t}"`);
     }
   });
 
   it('no doubled slash when the site URL carries one', () => {
-    expect(JSON.parse(organisationJsonLd(`${SITE}/`)).url).toBe(`${SITE}/`);
+    const g = graphOf(structuredData(`${SITE}/`, page));
+    expect(byType(g, 'NGO').url).toBe(`${SITE}/`);
+    expect(byType(g, 'WebPage').url).toBe(`${SITE}/expenses`);
+    expect(structuredData(`${SITE}/`, page)).not.toMatch(/[^:]\/\//);
+  });
+
+  it('cannot break out of its <script> block', () => {
+    // It is injected with {@html}; JSON.stringify leaves '<' alone, so a name containing
+    // "</script>" would end the block early and let the rest run as markup.
+    const json = structuredData(SITE, { ...page, name: 'x</script><img src=x onerror=alert(1)>' });
+    expect(json).not.toContain('</script>');
+    expect(json).not.toContain('<');
+    expect(byType(graphOf(json), 'WebPage').name, 'still the same string once parsed')
+      .toBe('x</script><img src=x onerror=alert(1)>');
+  });
+
+  it('every real route produces a valid page node', () => {
+    for (const r of ROUTES) {
+      const g = graphOf(structuredData(SITE, {
+        path: r.path, name: r.titleKey, description: r.description, homeLabel: 'Home', pageLabel: r.titleKey,
+      }));
+      const p = byType(g, 'WebPage');
+      expect(p.url).toBe(canonicalFor(SITE, r.path));
+    }
   });
 });
 

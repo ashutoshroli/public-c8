@@ -6,10 +6,14 @@
    * PAGE. A visitor who mistyped a URL saw the portal and no indication anything was wrong, and
    * a crawler following a stale link indexed the home page's content under the wrong URL.
    *
-   * HONEST LIMIT: this is a statically hosted site, so the fallback is served with HTTP 200
-   * whatever this component says. `noindex` keeps the wrong URL out of the index, which is the
-   * part the app can control; returning a genuine 404 status needs a rule at the host and is
-   * written up for the operator in the PR rather than pretended at here.
+   * THE STATUS CODE: this is a statically hosted site, so the status comes from the host, not from
+   * this component. `adapter-static` writes the fallback page as `404.html` (svelte.config.js), and
+   * Vercel serves a root `404.html` with a genuine HTTP 404 for any URL that is not a prerendered
+   * page. That page boots the app, the client router finds no route, and THIS component renders —
+   * so a visitor reads the message below while a crawler sees the 404 status. (It used to be
+   * `200.html`, served with status 200 for every unknown path: a soft 404.) The `noindex` below
+   * stays as a second line of defence for the one case the host cannot cover — a returning
+   * visitor's service worker answering a navigation from its cached app shell.
    */
   import { page } from '$app/stores';
   import { tr } from '$lib/stores/lang';

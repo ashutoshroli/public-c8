@@ -15,7 +15,10 @@
   <title>{$tr('privacy_subtitle')} — {$tr('app_title')}</title>
 </svelte:head>
 
-<PageHeading titleKey="app_subtitle" subtitle={$tr('privacy_subtitle')} />
+<!-- The H1 is the PAGE's name. It used to be "Transparency Portal" (the site tagline) with the real
+     name demoted to the subtitle, so the heading a crawler and a screen-reader user rely on was the
+     same on /privacy, /terms and /loan-rules. -->
+<PageHeading titleKey="privacy_subtitle" subtitle={$tr('org_name')} />
 
 <article class="surface space-y-3 p-5 text-sm leading-relaxed text-ink">
   <p class="text-xs text-muted">{$tr('policy_dates', dateVars)}</p>

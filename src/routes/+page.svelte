@@ -60,11 +60,10 @@
 </script>
 
 <svelte:head>
+  <!-- The meta description for this page comes from ROUTES via Seo.svelte. A second one here made
+       the home page the only page with two, and two descriptions is the signal that no one is
+       in charge of the snippet. -->
   <title>Chhath Puja Transparency Portal — Navyuvak Chhath Puja Samiti</title>
-  <meta
-    name="description"
-    content="Every contribution is visible. Every expense is accountable. Live financial transparency for Navyuvak Chhath Puja Samiti, Shaharpura, Gardih."
-  />
 </svelte:head>
 
 {#if $portalState.failed}

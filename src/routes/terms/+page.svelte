@@ -14,7 +14,7 @@
   <title>{$tr('terms_subtitle')} — {$tr('app_title')}</title>
 </svelte:head>
 
-<PageHeading titleKey="app_subtitle" subtitle={$tr('terms_subtitle')} />
+<PageHeading titleKey="terms_subtitle" subtitle={$tr('org_name')} />
 
 <article class="surface space-y-3 p-5 text-sm leading-relaxed text-ink">
   <p class="text-xs text-muted">{$tr('policy_dates', dateVars)}</p>
