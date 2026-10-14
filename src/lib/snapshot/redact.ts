@@ -16,6 +16,29 @@
 import type { UserRow } from '$lib/api/schema';
 
 /**
+ * Organisations (not people) whose NAME the committee has approved for publication.
+ *
+ * The contributors list holds institutions as well as people — a school that lent its sound system
+ * for the ghat is a row in it, like anyone else — and the guard cannot tell the two apart: it holds
+ * back any text that contains a name from that list. An institution is not a person, and the
+ * committee's own story of a year may thank one by name (2017 does).
+ *
+ * So this list is the committee's explicit decision, one organisation at a time, and nothing is
+ * inferred: a name that merely looks like an institution ("… School", "… Trust") stays guarded
+ * until it is written here. Adding one is a code change that is reviewed, not a side effect of
+ * someone typing a name into the Journey tab.
+ *
+ * What it frees is the NAME, in both scripts — the organisation's row is left out of the guard
+ * whole, so its Hindi spelling is freed with its English one. A year's story may then say it. (A
+ * short expense line is still checked word by word against every OTHER name in the list.) It frees
+ * nothing else: the organisation's own record (what it gave, when) is never in the HTML, because
+ * the facts hold no individual's rows, person or organisation.
+ *
+ *   - Genius Public School — approved by the committee, 14 Oct 2026 (the 2017 story).
+ */
+export const APPROVED_ORGANISATIONS: readonly string[] = ['Genius Public School'];
+
+/**
  * Words that are also people's names, but are far likelier here to be what was bought.
  * "Prasad" is an offering at a Chhath ghat as much as a given name; folding every "Prasad" line
  * would hide a real expense to protect no one.
@@ -56,11 +79,18 @@ export interface NameGuard {
   mentionsFullNameOrContact(text: string): boolean;
 }
 
-export function buildNameGuard(users: ReadonlyArray<UserRow> | undefined): NameGuard {
+export function buildNameGuard(
+  users: ReadonlyArray<UserRow> | undefined,
+  approved: readonly string[] = APPROVED_ORGANISATIONS,
+): NameGuard {
   const tokens = new Set<string>();
   const fullNames = new Set<string>();
+  const freed = new Set(approved.map((n) => words(n).join(' ')).filter(Boolean));
 
   for (const u of users ?? []) {
+    // An approved organisation's row is left out whole, so the Hindi spelling of its name is freed
+    // together with the English one.
+    if ((['Name', 'Name (Hindi)'] as const).some((f) => freed.has(words((u[f] ?? '').toString()).join(' ')))) continue;
     for (const field of ['Name', 'Name (Hindi)'] as const) {
       const raw = (u[field] ?? '').toString();
       const w = words(raw);
