@@ -200,6 +200,51 @@ describe('language', () => {
   });
 });
 
+// -------------------------------------------------------------------------- the year pages
+
+describe('links to the pages of each year', () => {
+  const yearLinks = () => [...host.querySelectorAll('nav a')].map((a) => [a.textContent, a.getAttribute('href')]);
+
+  it('the Home text offers a page for each year with records, newest first', () => {
+    const data = dataWith(8670);
+    putCarrier('home', data);
+    show('home');
+    expect(host.querySelector('nav')?.getAttribute('aria-label')).toBe('Chhath Puja, year by year');
+    expect(yearLinks()).toEqual([['2025', '/2025']]);
+  });
+
+  it('in Hindi they are the Hindi pages', () => {
+    putCarrier('home', dataWith(8670));
+    show('home');
+    lang.set('hi');
+    flushSync();
+    expect(host.querySelector('nav')?.getAttribute('aria-label')).toBe('छठ पूजा, वर्ष-दर-वर्ष');
+    expect(yearLinks()).toEqual([['2025', '/hi/2025']]);
+  });
+
+  it('the live text links the years of the live data, so a new year appears without a rebuild', () => {
+    putCarrier('home', dataWith(8670));
+    show('home');
+    ready(parsePortalData({
+      users: [{ ID: 'U1', Name: 'A B' }],
+      collections: [{ Name: 'U1', Year: 2025, Amount: 1 }, { Name: 'U1', Year: 2026, Amount: 2 }],
+    })!);
+    flushSync();
+    expect(yearLinks()).toEqual([['2026', '/2026'], ['2025', '/2025']]);
+  });
+
+  it('the Decade text links the years that have contributions, and the other pages link none', () => {
+    putCarrier('decade', dataWith(8670));
+    show('decade');
+    expect(yearLinks()).toEqual([['2025', '/2025']]);
+    unmount(app!); app = null;
+    document.head.innerHTML = '';
+    putCarrier('expenses', dataWith(8670));
+    show('expenses');
+    expect(host.querySelector('nav')).toBeNull();
+  });
+});
+
 // ----------------------------------------------------------------------------------- privacy
 
 describe('names', () => {

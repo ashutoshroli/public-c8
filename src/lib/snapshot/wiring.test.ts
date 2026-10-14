@@ -10,8 +10,9 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { parsePortalData } from '$lib/api/schema';
 import { ROUTES, sitemapXml, canonicalFor } from '$lib/seo';
+import { localePath } from '$lib/lang/url';
 import { llmsTxt, llmsFullTxt } from '$lib/crawlerFiles';
-import { PAGE_KEYS, factsForPage, type PageKey, type Snapshot } from './facts';
+import { PAGE_KEYS, factsForPage, yearPack, yearsWithRecords, type PageKey, type Snapshot } from './facts';
 
 const ROOT = process.cwd();
 const SRC = join(ROOT, 'src');
@@ -51,6 +52,25 @@ describe('the six data pages carry the section; no other page does', () => {
     const others = all.filter((f) => !carrying.has(f));
     expect(others.length).toBeGreaterThanOrEqual(6);
     for (const f of others) expect(read(f), `${f} should not carry the section`).not.toContain('AccountsText');
+  });
+
+  it('the Hindi pages carry it too — by being the very same components', () => {
+    // /hi/expenses is a wrapper that renders the English page component, so there is ONE copy of
+    // each page and the Hindi one cannot be missing a section the English one has.
+    for (const key of PAGE_KEYS) {
+      const hi = read(PAGE_FILE[key].replace('routes/', 'routes/hi/'));
+      expect(hi, key).toMatch(/import Page from '(\.\.\/)+(\w[\w-]*\/)?\+page\.svelte';/);
+      expect(hi, key).not.toContain('AccountsText');
+    }
+  });
+
+  it('a year page is a different component, and says so: it has its own text, not the box', () => {
+    const year = read('lib/components/YearPage.svelte');
+    expect(year, 'it does not render the box').not.toMatch(/import\s+AccountsText/);
+    expect(year).not.toContain('<AccountsText');
+    expect(year).toMatch(/yearText\(/);
+    expect(year, 'read the carrier before the template can remove it').toMatch(/const initial = untrack\(\(\) => prerenderedYear\(/);
+    expect(year).toMatch(/\{#if !browser && pre\}/);
   });
 
   it('the section sits OUTSIDE the error/empty branches, so it shows even when the live load failed', () => {
@@ -106,15 +126,25 @@ describe('the build’s data cannot reach a browser as JavaScript', () => {
 
 describe('sitemap lastmod', () => {
   const withDate = sitemapXml(SITE, { lastmod: '2026-10-14' });
+  const withYears = sitemapXml(SITE, { lastmod: '2026-10-14', years: [2025, 2024] });
 
-  it('is the snapshot date on the six pages that carry it, and on no others', () => {
+  it('is the snapshot date on the six pages that carry it, in both languages, and on no others', () => {
     const entries = withDate.split('<url>').slice(1);
     for (const e of entries) {
       const loc = /<loc>([^<]+)<\/loc>/.exec(e)![1];
-      const route = ROUTES.find((r) => canonicalFor(SITE, r.path) === loc)!;
+      const route = ROUTES.find((r) => [canonicalFor(SITE, r.path), canonicalFor(SITE, localePath(r.path === '' ? '/' : r.path, 'hi'))].includes(loc))!;
       expect(e.includes('<lastmod>2026-10-14</lastmod>'), `${loc}`).toBe(!!route.data);
     }
-    expect((withDate.match(/<lastmod>/g) || []).length).toBe(6);
+    expect((withDate.match(/<lastmod>/g) || []).length).toBe(6 * 2);
+  });
+
+  it('a year page carries the snapshot too, so it is dated like the pages it summarises', () => {
+    for (const loc of ['/2025', '/2024', '/hi/2025', '/hi/2024']) {
+      const entry = withYears.split('<url>').find((e) => e.includes(`<loc>${SITE}${loc}</loc>`))!;
+      expect(entry, loc).toContain('<lastmod>2026-10-14</lastmod>');
+    }
+    expect((withYears.match(/<lastmod>/g) || []).length).toBe(6 * 2 + 2 * 2);
+    expect(sitemapXml(SITE, { years: [2025] }), 'no snapshot date, no lastmod — year pages included').not.toContain('lastmod');
   });
 
   it('puts lastmod where the sitemap schema wants it: after loc, before changefreq', () => {
@@ -127,9 +157,9 @@ describe('sitemap lastmod', () => {
     expect(sitemapXml(SITE, { lastmod: undefined })).not.toContain('lastmod');
   });
 
-  it('the endpoint passes the snapshot’s date', () => {
+  it('the endpoint passes the snapshot’s date and the years that have a page', () => {
     const ep = read('routes/sitemap.xml/+server.ts');
-    expect(ep).toMatch(/sitemapXml\(config\.siteUrl, \{ lastmod: snapshot\?\.asOf \}\)/);
+    expect(ep).toMatch(/sitemapXml\(config\.siteUrl, \{ lastmod: snapshot\?\.asOf, years: snapshot\?\.years \}\)/);
   });
 });
 
@@ -144,7 +174,10 @@ function fixtureSnapshot(): Snapshot {
   })!;
   const pages = {} as Snapshot['pages'];
   for (const k of PAGE_KEYS) pages[k] = factsForPage(k, data, 2025, NOW);
-  return { asOf: '2026-10-14', builtAt: NOW.toISOString(), year: 2025, version: '1', pages };
+  const years = yearsWithRecords(data);
+  const byYear: Snapshot['byYear'] = {};
+  for (const y of years) byYear[y] = yearPack(data, y, NOW);
+  return { asOf: '2026-10-14', builtAt: NOW.toISOString(), year: 2025, version: '1', pages, years, byYear };
 }
 
 describe('llms.txt and llms-full.txt', () => {
@@ -164,6 +197,7 @@ describe('llms.txt and llms-full.txt', () => {
     expect(headings).toEqual([
       '## Home — 2025', '## Contributors List — 2025', '## Expenses Ledger — 2025',
       '## Surplus Loan Distribution — 2025', '## Active Committee — 2025', '## 10 Years of Chhath — 2017 → 2026',
+      '## Chhath Puja 2025',
     ]);
     for (const key of PAGE_KEYS) expect(md).toContain(`Page: ${canonicalFor(SITE, PAGE_PATH[key])}`);
     expect(md).toContain('Banner — ₹100');
@@ -190,12 +224,59 @@ describe('llms.txt and llms-full.txt', () => {
   });
 
   it('both endpoints are prerendered and pass the snapshot through', () => {
-    for (const f of ['routes/llms.txt/+server.ts', 'routes/llms-full.txt/+server.ts']) {
+    for (const f of ['routes/llms.txt/+server.ts', 'routes/llms-full.txt/+server.ts', 'routes/hi/llms-full.txt/+server.ts']) {
       const ep = read(f);
       expect(ep, f).toMatch(/export const prerender = true/);
       expect(ep, f).toMatch(/from '\$lib\/snapshot'/);
       expect(ep, f).toMatch(/text\/plain; charset=utf-8/);
     }
+    expect(read('routes/llms.txt/+server.ts')).toMatch(/years: snapshot\?\.years/);
+    expect(read('routes/hi/llms-full.txt/+server.ts')).toMatch(/llmsFullTxt\(config\.siteUrl, snapshot, 'hi'\)/);
+  });
+
+  it('llms-full.txt has a section for each year, each pointing at its page, with the year’s own figures', () => {
+    const md = llmsFullTxt(SITE, fixtureSnapshot());
+    const at = md.indexOf('## Chhath Puja 2025');
+    expect(at).toBeGreaterThan(0);
+    const section = md.slice(at);
+    expect(section).toContain(`Page: ${SITE}/2025`);
+    expect(section.split('\n').filter((l) => l.startsWith('### '))).toEqual([
+      '### Overview', '### Contributors', '### Expenses', '### Loans', '### Committee',
+    ]);
+    expect(section).toContain('Banner — ₹100');
+    expect(section, 'the file note, not the page note').toContain('Figures for 2025, as of 14 Oct 2026 (IST), from the committee’s ledger.');
+  });
+
+  it('the Home and Decade sections link the year pages, with absolute addresses', () => {
+    const md = llmsFullTxt(SITE, fixtureSnapshot());
+    expect(md).toContain(`[2025](${SITE}/2025)`);
+  });
+
+  it('the Hindi file is the same document in Hindi, pointing at the Hindi pages', () => {
+    const md = llmsFullTxt(SITE, fixtureSnapshot(), 'hi');
+    expect(md.startsWith('# छठ पूजा पारदर्शिता पोर्टल — हिसाब सादे शब्दों में\n')).toBe(true);
+    expect(md.split('\n').filter((l) => l.startsWith('## '))).toEqual([
+      '## होम — 2025', '## योगदानकर्ता सूची — 2025', '## व्यय बही — 2025', '## अधिशेष ऋण वितरण — 2025',
+      '## सक्रिय समिति — 2025', '## छठ के 10 वर्ष — 2017 → 2026', '## छठ पूजा 2025',
+    ]);
+    expect(md).toContain(`पृष्ठ: ${SITE}/hi`);
+    expect(md).toContain(`पृष्ठ: ${SITE}/hi/expenses`);
+    expect(md).toContain(`पृष्ठ: ${SITE}/hi/2025`);
+    expect(md).toContain(`[2025](${SITE}/hi/2025)`);
+    expect(md).toContain('बैनर — ₹100');
+    expect(md).toContain(`(${SITE}/hi/loan-rules)`);
+    expect(md, 'no English page address in the Hindi file').not.toMatch(new RegExp(`Page: ${SITE.replace(/\./g, '\\.')}`));
+    // Whole words: "रवि" is also a slice of the ordinary word प्रविष्टि ("entry"), which is not a leak.
+    const words = md.split(/[\p{P}\p{S}\s]+/u);
+    for (const w of ['Ravi', 'Verma', 'रवि', 'वर्मा']) expect(words, w).not.toContain(w);
+    for (const s of ['Ravi Verma', 'रवि वर्मा', '9876500001', 'USER0001']) expect(md, s).not.toContain(s);
+  });
+
+  it('says in Hindi, too, that there is no snapshot, and does not invent one', () => {
+    const md = llmsFullTxt(SITE, null, 'hi');
+    expect(md).toContain('कोई सादा-पाठ स्नैपशॉट नहीं बना');
+    expect(md).not.toMatch(/₹/);
+    expect(md).toContain(`${SITE}/llms.txt`);
   });
 });
 

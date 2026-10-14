@@ -5,7 +5,7 @@
    * without answering, and nothing analytics-related loads until the visitor says Accept.
    */
   import { onMount } from 'svelte';
-  import { tr } from '$lib/stores/lang';
+  import { tr, lp } from '$lib/stores/lang';
   import {
     consent,
     consentPanelOpen,
@@ -56,7 +56,7 @@
     <p class="text-sm font-bold text-ink">{$tr('consent_title')}</p>
     <p class="mt-1 text-xs leading-relaxed text-muted">
       {$tr('consent_text')}
-      <a href="/privacy#cookies" class="font-semibold text-brand-700 underline underline-offset-2">{$tr('consent_details')}</a>
+      <a href={$lp('/privacy#cookies')} class="font-semibold text-brand-700 underline underline-offset-2">{$tr('consent_details')}</a>
     </p>
     <div class="mt-3 flex gap-2">
       <button type="button" class="chip flex-1 justify-center" onclick={decline}>{$tr('consent_decline')}</button>

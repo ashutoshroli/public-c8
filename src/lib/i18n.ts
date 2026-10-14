@@ -601,7 +601,28 @@ export const T: Record<Lang, Dict> = {
     acc_dec_year: '{year}: {total} from {contributors}',
     acc_dec_open: '{year}: collection in progress, no records yet',
     acc_dec_norecords: '{year}: no records entered',
-    acc_dec_total: 'In total: {grandTotal} from {entries}.'
+    acc_dec_total: 'In total: {grandTotal} from {entries}.',
+    // --- A page for each year (/2025, /hi/2025) ---
+    // The title is the page's name: in a search result it must say WHICH year at a glance. The
+    // description is written for the snippet under it and names what the page holds (roles, never
+    // people), under ~155 characters so it is not cut off mid-sentence.
+    year_title: 'Chhath Puja {year}',
+    year_description:
+      'Chhath Puja {year} at Shaharpura: what was contributed, what was spent, the loans given and the committee’s roles, from the committee’s ledger.',
+    year_overview_h: 'Overview',
+    year_no_records: 'No records have been published for {year} yet.',
+    year_loading: 'Loading the figures for {year}…',
+    year_nav_h: 'Other years',
+    year_details_h: 'The detailed ledgers',
+    year_details_sub: 'Open a ledger for this year, with the full lists.',
+    acc_by_year_h: 'Chhath Puja, year by year',
+    // --- llms-full.txt: the same accounts as one plain-text file, for readers that are not browsers ---
+    llms_full_title: 'Chhath Puja Transparency Portal — the accounts in plain text',
+    llms_full_intro:
+      'Navyuvak Chhath Puja Samiti, Shaharpura, Gardih (Jharkhand, India), ledger as of {date} (IST). This file repeats, in plain sentences, what the portal’s pages show. People’s names, contact details and individual amounts are left out on purpose. The pages carry live figures and may be newer.',
+    llms_full_none: 'No plain-text snapshot of the accounts was produced for this version of the site.',
+    llms_full_none_where: 'The figures are on the pages themselves, listed in {url}.',
+    llms_full_page: 'Page'
   },
   hi: {
     // --- ported verbatim from frontend-v3 ---
@@ -1183,7 +1204,25 @@ export const T: Record<Lang, Dict> = {
     acc_dec_year: '{year}: {contributors} से {total}',
     acc_dec_open: '{year}: संग्रह जारी है, अभी कोई रिकॉर्ड नहीं',
     acc_dec_norecords: '{year}: कोई रिकॉर्ड दर्ज नहीं',
-    acc_dec_total: 'कुल: {entries} से {grandTotal}।'
+    acc_dec_total: 'कुल: {entries} से {grandTotal}।',
+    // --- हर वर्ष का अपना पृष्ठ (/hi/2025) ---
+    year_title: 'छठ पूजा {year}',
+    year_description:
+      'शहरपुरा में छठ पूजा {year}: कितना योगदान मिला, कितना खर्च हुआ, कौन-से ऋण दिए गए और समिति की भूमिकाएँ, समिति की बही के अनुसार।',
+    year_overview_h: 'सारांश',
+    year_no_records: '{year} के लिए अभी कोई रिकॉर्ड प्रकाशित नहीं है।',
+    year_loading: '{year} के आँकड़े लोड हो रहे हैं…',
+    year_nav_h: 'अन्य वर्ष',
+    year_details_h: 'विस्तृत बही',
+    year_details_sub: 'इस वर्ष की पूरी सूचियों वाली बही खोलें।',
+    acc_by_year_h: 'छठ पूजा, वर्ष-दर-वर्ष',
+    // --- llms-full.txt (हिंदी) ---
+    llms_full_title: 'छठ पूजा पारदर्शिता पोर्टल — हिसाब सादे शब्दों में',
+    llms_full_intro:
+      'नवयुवक छठ पूजा समिति, शहरपुरा, गरडीह (झारखंड, भारत); बही {date} (IST) तक की। यह फ़ाइल पोर्टल के पन्नों में दिखने वाली बातों को सादे वाक्यों में दोहराती है। लोगों के नाम, संपर्क विवरण और व्यक्तिगत राशियाँ जान-बूझकर छोड़ी गई हैं। पन्नों पर लाइव आँकड़े होते हैं और वे इससे नए हो सकते हैं।',
+    llms_full_none: 'साइट के इस संस्करण के लिए हिसाब का कोई सादा-पाठ स्नैपशॉट नहीं बना।',
+    llms_full_none_where: 'आँकड़े पन्नों पर ही हैं, जिनकी सूची {url} में है।',
+    llms_full_page: 'पृष्ठ'
   }
 };
 

@@ -1,8 +1,9 @@
 // /llms-full.txt — the accounts written out in plain sentences, for every data page, in one file.
 //
-// The same text the pages carry at the bottom (src/lib/snapshot), as Markdown, from the data the
-// build fetched. Prerendered: it is as fresh as the last deploy, which is also when the sitemap's
-// `lastmod` for these pages moves.
+// The same text the pages carry at the bottom (src/lib/snapshot), plus a section for each year, as
+// Markdown, from the data the build fetched. The Hindi version is /hi/llms-full.txt.
+// Prerendered: it is as fresh as the last deploy, which is also when the sitemap's `lastmod` for
+// these pages moves.
 import { config } from '$lib/config';
 import { llmsFullTxt } from '$lib/crawlerFiles';
 import { snapshot } from '$lib/snapshot';

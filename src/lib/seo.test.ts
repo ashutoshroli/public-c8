@@ -29,7 +29,11 @@ import { resolve, join } from 'node:path';
 import {
   ROUTES, canonicalFor, metaFor, normalisePath, sitemapXml,
   structuredData, indexableRoutes, isIndexable, OG_IMAGE, ogImageUrl,
+  alternatesFor, descriptionFor, yearDescription, yearDocumentTitle, yearTitle,
+  type PageLd,
 } from './seo';
+import { localePath } from './lang/url';
+import { T } from './i18n';
 
 const SRC = resolve(process.cwd(), 'src');
 const read = (p: string) => readFileSync(join(SRC, p), 'utf8');
@@ -38,12 +42,17 @@ const SITE = 'https://chhath.shaharpura.com';
 // ------------------------------------------------ 1. THE TABLE MATCHES THE ROUTES
 
 describe('PR-42: the metadata table covers the routes that exist', () => {
-  /** Every routable page path under src/routes, in the '' | '/foo' form. */
+  /**
+   * Every routable ENGLISH page path under src/routes, in the '' | '/foo' form. Two kinds of
+   * directory are not pages of their own and are checked separately below: `hi/` holds the Hindi
+   * twin of each page, and `[year=year]` is the one dynamic route (a page for each year).
+   */
   function pathsOnDisk(): string[] {
     const dir = join(SRC, 'routes');
     const out: string[] = [];
     if (existsSync(join(dir, '+page.svelte'))) out.push('');
     for (const entry of readdirSync(dir)) {
+      if (entry === 'hi' || entry.startsWith('[')) continue;
       const full = join(dir, entry);
       if (!statSync(full).isDirectory()) continue;
       if (existsSync(join(full, '+page.svelte'))) out.push(`/${entry}`);
@@ -67,6 +76,38 @@ describe('PR-42: the metadata table covers the routes that exist', () => {
     const stale = ROUTES.map((r) => r.path).filter((p) => !onDisk.has(p));
     expect(stale, 'a sitemap that offers a 404 wastes the crawl budget').toEqual([]);
   });
+
+  it('every page has a Hindi twin under /hi, and the twin has no page of its own', () => {
+    const hiDir = join(SRC, 'routes/hi');
+    for (const r of ROUTES) {
+      const file = join(hiDir, r.path, '+page.svelte');
+      expect(existsSync(file), `/hi${r.path} has no route file`).toBe(true);
+      // A wrapper: it imports the English page and renders it, nothing else. The language is read
+      // from the address, so the same component IS the Hindi page — and the two cannot drift.
+      const src = readFileSync(file, 'utf8');
+      const rel = r.path === '' ? '../+page.svelte' : `../..${r.path}/+page.svelte`;
+      expect(src, `/hi${r.path} should import ${rel}`).toContain(`import Page from '${rel}';`);
+      expect(src).toMatch(/<Page \/>/);
+    }
+  });
+
+  it('the Hindi directory holds nothing that is not a twin of an English page, a year page or the llms file', () => {
+    const allowed = new Set([...ROUTES.map((r) => r.path.slice(1)).filter(Boolean), '[year=year]', 'llms-full.txt']);
+    const extra = readdirSync(join(SRC, 'routes/hi')).filter((e) => statSync(join(SRC, 'routes/hi', e)).isDirectory() && !allowed.has(e));
+    expect(extra, 'a Hindi page with no English original would be an orphan in the sitemap').toEqual([]);
+  });
+
+  it('the year pages exist in both languages and are prerendered from the snapshot’s years', () => {
+    for (const dir of ['routes/[year=year]', 'routes/hi/[year=year]']) {
+      expect(read(`${dir}/+page.svelte`), dir).toContain("import YearPage from '$lib/components/YearPage.svelte';");
+      const server = read(`${dir}/+page.server.ts`);
+      expect(server, dir).toMatch(/export const prerender = true/);
+      expect(server, dir).toMatch(/snapshot\?\.years/);
+      // No `load`: a server load would make every year page fetch a __data.json file.
+      expect(server, `${dir}: a load function would add a __data.json request`).not.toMatch(/export (async )?function load|export const load/);
+    }
+    expect(read('params/year.ts')).toMatch(/\^20\\d\{2\}\$/);
+  });
 });
 
 // ------------------------------------------------------- 2. CANONICALS ARE PER PATH
@@ -89,6 +130,9 @@ describe('PR-42: the canonical names the page it is on', () => {
   it('canonicals are unique, so no two pages claim to be the same page', () => {
     const all = ROUTES.map((r) => canonicalFor(SITE, r.path));
     expect(new Set(all).size).toBe(all.length);
+    // ... in both languages: the Hindi page is a page of its own, not a second address of the English one.
+    const both = ROUTES.flatMap((r) => (['en', 'hi'] as const).map((l) => canonicalFor(SITE, localePath(r.path === '' ? '/' : r.path, l))));
+    expect(new Set(both).size).toBe(ROUTES.length * 2);
   });
 
   it('a trailing slash resolves to the same canonical, not a competing one', () => {
@@ -165,7 +209,7 @@ describe('PR-42: the canonical names the page it is on', () => {
     const seo = read('lib/components/Seo.svelte');
     // og:title/twitter:title for the home route use social_title, a stronger share title
     // than the bare app_title 'Chhath Puja'.
-    expect(seo, 'a dedicated social title must drive og:title/twitter:title').toMatch(/socialTitle/);
+    expect(seo, 'a dedicated social title must drive og:title/twitter:title').toMatch(/shareTitle/);
     expect(seo).toMatch(/social_title/);
   });
 
@@ -197,6 +241,39 @@ describe('PR-42: every page describes itself', () => {
     const all = ROUTES.map((r) => r.description);
     expect(new Set(all).size, 'duplicate descriptions read as duplicate pages').toBe(all.length);
   });
+
+  it('each page has its own Hindi description, in Hindi, of the same size', () => {
+    const DEVANAGARI = /[\u0900-\u097F]/;
+    for (const r of ROUTES) {
+      expect(r.descriptionHi.length, `${r.path} descriptionHi`).toBeGreaterThan(30);
+      expect(r.descriptionHi.length, `${r.path} descriptionHi is ${r.descriptionHi.length} chars`).toBeLessThanOrEqual(165);
+      expect(DEVANAGARI.test(r.descriptionHi), `${r.path}: a Hindi description written in Latin letters`).toBe(true);
+      expect(r.descriptionHi, `${r.path}: the "Hindi" description is the English one`).not.toBe(r.description);
+      expect(descriptionFor(r, 'hi')).toBe(r.descriptionHi);
+      expect(descriptionFor(r, 'en')).toBe(r.description);
+    }
+    const all = ROUTES.map((r) => r.descriptionHi);
+    expect(new Set(all).size, 'duplicate Hindi descriptions read as duplicate pages').toBe(all.length);
+  });
+
+  it('a year page has a title and description of its own, in each language, naming the year', () => {
+    for (const lang of ['en', 'hi'] as const) {
+      const d = yearDescription(2023, lang);
+      expect(d).toContain('2023');
+      expect(d.length, `${lang} year description is ${d.length} chars`).toBeLessThanOrEqual(165);
+      expect(d.length).toBeGreaterThan(60);
+      expect(yearTitle(2023, lang)).toContain('2023');
+      expect(yearDocumentTitle(2023, lang)).toBe(`${yearTitle(2023, lang)} — ${T[lang].org_name}`);
+      expect(yearDescription(2023, lang), 'differs by year').not.toBe(yearDescription(2024, lang));
+    }
+    expect(yearDescription(2023, 'hi')).not.toBe(yearDescription(2023, 'en'));
+  });
+
+  it('what a year page says it holds is roles, never people', () => {
+    // The descriptions are the text shown in a search result. They promise the committee's ROLES.
+    expect(yearDescription(2025, 'en')).toMatch(/roles/);
+    expect(yearDescription(2025, 'en')).not.toMatch(/\b(names?|members?|who)\b/i);
+  });
 });
 
 // ------------------------------------------------------------------- 4. SITEMAP
@@ -204,12 +281,14 @@ describe('PR-42: every page describes itself', () => {
 describe('PR-42: the sitemap is generated, so it cannot drift', () => {
   const xml = sitemapXml(SITE);
 
-  it('lists every indexable route exactly once', () => {
+  it('lists every indexable route exactly once in each language', () => {
     for (const r of indexableRoutes()) {
-      const loc = `<loc>${canonicalFor(SITE, r.path)}</loc>`;
-      expect(xml.split(loc).length - 1, `${r.path} appears more than once or not at all`).toBe(1);
+      for (const lang of ['en', 'hi'] as const) {
+        const loc = `<loc>${canonicalFor(SITE, localePath(r.path === '' ? '/' : r.path, lang))}</loc>`;
+        expect(xml.split(loc).length - 1, `${lang} ${r.path} appears more than once or not at all`).toBe(1);
+      }
     }
-    expect((xml.match(/<url>/g) || []).length).toBe(indexableRoutes().length);
+    expect((xml.match(/<url>/g) || []).length).toBe(indexableRoutes().length * 2);
   });
 
   it('includes the routes the hand-written file had lost', () => {
@@ -228,6 +307,30 @@ describe('PR-42: the sitemap is generated, so it cannot drift', () => {
         .not.toContain(`<loc>${canonicalFor(SITE, r.path)}</loc>`);
       expect(isIndexable(r.path)).toBe(false);
     }
+  });
+
+  it('every entry names both languages and x-default, so Google knows the two URLs are one page', () => {
+    const entries = xml.split('<url>').slice(1);
+    expect(entries.length).toBeGreaterThan(0);
+    for (const e of entries) {
+      const loc = /<loc>([^<]+)<\/loc>/.exec(e)![1];
+      const links = [...e.matchAll(/<xhtml:link rel="alternate" hreflang="([^"]+)" href="([^"]+)"\/>/g)].map((m) => [m[1], m[2]]);
+      expect(links.map((l) => l[0]), loc).toEqual(['en', 'hi', 'x-default']);
+      // x-default is the English address; the entry itself is one of the two language pages.
+      expect(links[2][1], loc).toBe(links[0][1]);
+      expect([links[0][1], links[1][1]], `${loc} must be one of its own alternates`).toContain(loc);
+      expect(links[1][1]).toMatch(/\/hi(\/|$)/);
+      expect(links[0][1]).not.toMatch(/\/hi(\/|$)/);
+    }
+    expect(xml).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
+  });
+
+  it('lists a page for each year given, in both languages, and none without years', () => {
+    const withYears = sitemapXml(SITE, { years: [2025, 2024] });
+    for (const loc of ['/2025', '/2024', '/hi/2025', '/hi/2024']) expect(withYears).toContain(`<loc>${SITE}${loc}</loc>`);
+    expect((withYears.match(/<url>/g) || []).length).toBe(indexableRoutes().length * 2 + 4);
+    expect(xml).not.toMatch(/<loc>[^<]*\/20\d\d<\/loc>/);
+    expect(sitemapXml(SITE, { years: [] })).toBe(xml);
   });
 
   it('the hand-maintained static file is gone, so there is one source', () => {
@@ -250,8 +353,8 @@ describe('PR-42: the sitemap is generated, so it cannot drift', () => {
 
 describe('PR-42: structured data is valid and honest', () => {
   type Node = Record<string, unknown> & { '@type': string; '@id': string };
-  const page = {
-    path: '/expenses', name: 'Expenses Ledger — Chhath Puja', description: metaFor('/expenses')!.description,
+  const page: PageLd = {
+    path: '/expenses', lang: 'en', name: 'Expenses Ledger — Chhath Puja', description: metaFor('/expenses')!.description,
     homeLabel: 'Home', pageLabel: 'Expenses Ledger',
   };
   const graphOf = (json: string): Node[] => JSON.parse(json)['@graph'];
@@ -289,6 +392,7 @@ describe('PR-42: structured data is valid and honest', () => {
     expect(p.name).toBe(page.name);
     expect(p.description).toBe(page.description);
     expect(p.isPartOf).toEqual({ '@id': `${SITE}/#website` });
+    expect(p.inLanguage).toBe('en');
     expect(p.breadcrumb).toEqual({ '@id': `${SITE}/expenses#breadcrumb` });
 
     const b = byType(g, 'BreadcrumbList') as Node & { itemListElement: Record<string, unknown>[] };
@@ -371,13 +475,55 @@ describe('PR-42: structured data is valid and honest', () => {
       .toBe('x</script><img src=x onerror=alert(1)>');
   });
 
-  it('every real route produces a valid page node', () => {
+  it('every real route produces a valid page node, in each language, at that language’s address', () => {
     for (const r of ROUTES) {
+      for (const lang of ['en', 'hi'] as const) {
+        const g = graphOf(structuredData(SITE, {
+          path: r.path, lang, name: r.titleKey, description: descriptionFor(r, lang), homeLabel: 'Home', pageLabel: r.titleKey,
+        }));
+        const p = byType(g, 'WebPage');
+        expect(p.url).toBe(canonicalFor(SITE, localePath(r.path === '' ? '/' : r.path, lang)));
+        expect(p.inLanguage).toBe(lang);
+      }
+    }
+  });
+
+  it('a Hindi page’s graph points at Hindi addresses all the way down, and says Hindi', () => {
+    const hi: PageLd = { ...page, lang: 'hi', name: 'व्यय बही — छठ पूजा', description: metaFor('/expenses')!.descriptionHi, homeLabel: 'होम', pageLabel: 'व्यय बही' };
+    const g = graphOf(structuredData(SITE, hi));
+    const p = byType(g, 'WebPage');
+    expect(p.url).toBe(`${SITE}/hi/expenses`);
+    expect(p['@id']).toBe(`${SITE}/hi/expenses#webpage`);
+    expect(p.inLanguage).toBe('hi');
+    expect(p.name).toBe('व्यय बही — छठ पूजा');
+    const b = byType(g, 'BreadcrumbList') as Node & { itemListElement: Record<string, unknown>[] };
+    expect(b.itemListElement.map((i) => [i.position, i.name, i.item])).toEqual([
+      [1, 'होम', `${SITE}/hi`],
+      [2, 'व्यय बही', `${SITE}/hi/expenses`],
+    ]);
+    // The organisation and the site are the same two nodes in either language.
+    const en = graphOf(structuredData(SITE, page));
+    expect(byType(g, 'NGO')).toEqual(byType(en, 'NGO'));
+    expect(byType(g, 'WebSite')).toEqual(byType(en, 'WebSite'));
+  });
+
+  it('the Hindi home page is /hi, with no breadcrumb', () => {
+    const g = graphOf(structuredData(SITE, { ...page, path: '', lang: 'hi', pageLabel: 'होम' }));
+    expect(byType(g, 'WebPage').url).toBe(`${SITE}/hi`);
+    expect(g.some((n) => n['@type'] === 'BreadcrumbList')).toBe(false);
+  });
+
+  it('a year page is a page of the site, with a two-step breadcrumb, in either language', () => {
+    for (const lang of ['en', 'hi'] as const) {
       const g = graphOf(structuredData(SITE, {
-        path: r.path, name: r.titleKey, description: r.description, homeLabel: 'Home', pageLabel: r.titleKey,
+        path: '/2025', lang, name: yearDocumentTitle(2025, lang), description: yearDescription(2025, lang),
+        homeLabel: T[lang].nav_home, pageLabel: yearTitle(2025, lang),
       }));
-      const p = byType(g, 'WebPage');
-      expect(p.url).toBe(canonicalFor(SITE, r.path));
+      const url = lang === 'hi' ? `${SITE}/hi/2025` : `${SITE}/2025`;
+      expect(byType(g, 'WebPage').url).toBe(url);
+      const b = byType(g, 'BreadcrumbList') as Node & { itemListElement: Record<string, unknown>[] };
+      expect(b.itemListElement[1].item).toBe(url);
+      expect(b.itemListElement[1].name).toBe(yearTitle(2025, lang));
     }
   });
 });

@@ -240,7 +240,7 @@ describe('the head: one manifest, one description, one h1 that names the page', 
   it('the home page leaves the meta description to Seo.svelte', () => {
     const home = src('routes/+page.svelte');
     expect(home, 'a second description is emitted next to the one from ROUTES').not.toMatch(/<meta\s+name="description"/);
-    expect(src('lib/components/Seo.svelte')).toMatch(/<meta name="description" content=\{meta\.description\} \/>/);
+    expect(src('lib/components/Seo.svelte')).toMatch(/<meta name="description" content=\{description\} \/>/);
     expect(metaFor('')?.description.length).toBeGreaterThan(40);
   });
 
@@ -268,8 +268,9 @@ describe('the head: one manifest, one description, one h1 that names the page', 
 
   it('the footer links Contributors and 10 Years from every page, in both languages', () => {
     const footer = src('lib/components/FooterLinks.svelte');
-    expect(footer).toContain('href="/contributors"');
-    expect(footer).toContain('href="/decade"');
+    // $lp() keeps a Hindi page's footer on the Hindi pages.
+    expect(footer).toContain("href={$lp('/contributors')}");
+    expect(footer).toContain("href={$lp('/decade')}");
     expect(src('lib/components/Shell.svelte')).toContain('<FooterLinks />');
     for (const key of ['contributors_list', 'decade_title']) {
       expect(footer).toContain(`$tr('${key}')`);
@@ -421,7 +422,8 @@ describe('llms.txt: a map of the site for language models', () => {
     const firstContent = lines.slice(1).find((l) => l.trim() !== '');
     expect(firstContent).toMatch(/^> .{80,}/);
     const sections = lines.filter((l) => l.startsWith('## '));
-    expect(sections).toEqual(['## Pages', '## Optional']);
+    // "Years" appears only when there are year pages to list (see the next block).
+    expect(sections).toEqual(['## Pages', '## Hindi', '## Optional']);
   });
 
   it('links every indexable page once, with an absolute URL and a description', () => {
@@ -457,6 +459,24 @@ describe('llms.txt: a map of the site for language models', () => {
 
   it('no doubled slash when the site URL carries one', () => {
     expect(llmsTxt(`${SITE}/`)).toBe(md);
+  });
+
+  it('lists the year pages, newest first, only when there are any', () => {
+    const withYears = llmsTxt(SITE, { years: [2023, 2025, 2024] });
+    expect(withYears.split('\n').filter((l) => l.startsWith('## '))).toEqual(['## Pages', '## Years', '## Hindi', '## Optional']);
+    const yearLines = withYears.split('\n').filter((l) => /^- \[Chhath Puja \d{4}\]/.test(l));
+    expect(yearLines).toEqual([
+      `- [Chhath Puja 2025](${SITE}/2025)`, `- [Chhath Puja 2024](${SITE}/2024)`, `- [Chhath Puja 2023](${SITE}/2023)`,
+    ]);
+    expect(md, 'no years given, no section').not.toContain('## Years');
+    expect(llmsTxt(SITE, { years: [] })).toBe(md);
+  });
+
+  it('says Hindi exists, by pointing at the Hindi home page — and at the Hindi full text when there is one', () => {
+    expect(md).toContain(`- [Home, in Hindi](${SITE}/hi): `);
+    expect(md).toContain('also exists in Hindi at the same address with /hi in front of it');
+    expect(md, 'no snapshot, no Hindi full-text file to link').not.toContain('/hi/llms-full.txt');
+    expect(llmsTxt(SITE, { fullTextAsOf: '2026-10-14' })).toContain(`[The accounts in plain text, in Hindi](${SITE}/hi/llms-full.txt)`);
   });
 });
 

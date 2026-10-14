@@ -26,6 +26,7 @@ import {
   computeSummary,
   contributorsForYear,
   expenseItems,
+  journeyEntries,
   isRepaidLoan,
   loanTotalWithInterest,
   loansForYear,
@@ -87,6 +88,8 @@ export interface HomeFacts {
   loanCount: number;
   available: number;
   decade: Pick<DecadeFacts, 'startYear' | 'endYear' | 'recordedYears' | 'grandTotal' | 'grandContributors'>;
+  /** Years that have records, newest first: the Home text links a page for each. */
+  years: number[];
 }
 
 export interface ExpensesFacts {
@@ -140,8 +143,24 @@ export interface ContributorsFacts {
 export type PageFacts = HomeFacts | ExpensesFacts | LoansFacts | CommitteeFacts | ContributorsFacts | DecadeFacts;
 
 /**
+ * Everything the page for ONE year says (/2025, /hi/2025): the same facts the individual pages
+ * use, for that year, plus the committee's one-paragraph story of it when there is one.
+ */
+export interface YearPack {
+  year: number;
+  home: HomeFacts;
+  contributors: ContributorsFacts;
+  expenses: ExpensesFacts;
+  loans: LoansFacts;
+  committee: CommitteeFacts;
+  /** The year's entry from "Our Journey", unless it named someone; both languages. */
+  story: { title: Bilingual; content: Bilingual } | null;
+}
+
+/**
  * What a build keeps of the data it fetched: the facts for each page, for the year shown by
- * default. Names never get this far — see the note at the top of this file.
+ * default, and a pack for every year that has a page of its own. Names never get this far — see
+ * the note at the top of this file.
  */
 export interface Snapshot {
   /** The IST date the data was fetched on ('YYYY-MM-DD'). */
@@ -153,9 +172,27 @@ export interface Snapshot {
   /** The API's data-version token at fetch time, when it gave one. */
   version: string;
   pages: Record<PageKey, PageFacts>;
+  /** Years with a page of their own, newest first. */
+  years: number[];
+  /** The year pages, by year. */
+  byYear: Record<number, YearPack>;
 }
 
 // -------------------------------------------------------------------------- which year
+
+/**
+ * The years that deserve a page of their own: any year with a contribution, a loan, a committee
+ * or an expense on record. (`availableYears` covers the first three; the portal's year selector is
+ * built from it. A year with only expenses is rare but real, and not one to lose.)
+ */
+export function yearsWithRecords(data: PortalData): number[] {
+  const ys = new Set<number>(availableYears(data).filter((y) => collectionsForYear(data, y).length + loansForYear(data, y).length + committeeForYear(data, y).length > 0));
+  for (const e of data.expenses ?? []) {
+    const y = parseInt(String(e.Year ?? ''), 10);
+    if (Number.isFinite(y)) ys.add(y);
+  }
+  return [...ys].sort((a, b) => b - a);
+}
 
 /**
  * The year shown before the visitor picks one — the same rule `initPortal` applies in the
@@ -217,6 +254,7 @@ export function homeFacts(data: PortalData, year: YearSel, now: Date): HomeFacts
     loanGiven: fin.loanGiven,
     loanCount: loansForYear(data, year).length,
     available: fin.available,
+    years: yearsWithRecords(data),
     decade: {
       startYear: dec.startYear,
       endYear: dec.endYear,
@@ -345,4 +383,45 @@ export function factsForPage(page: PageKey, data: PortalData, year: YearSel, now
     case 'contributors': return contributorsFacts(data, year);
     case 'decade': return decadeFacts(data, now);
   }
+}
+
+// ------------------------------------------------------------------------------ one year
+
+/**
+ * Reads the committee's story of a year ("Our Journey") and decides whether it may be published:
+ * not if it names a person (the WHOLE name of someone in the users table), or holds a phone number
+ * or an email. `withheld` says it was held back for that reason, so a build can report it.
+ */
+function readStory(data: PortalData, year: YearSel): { story: YearPack['story']; withheld: boolean } {
+  const entry = journeyEntries(data).find((e) => e.year === year);
+  if (!entry) return { story: null, withheld: false };
+  const title = { en: entry.titleEn.trim(), hi: (entry.titleHi || entry.titleEn).trim() };
+  const content = { en: entry.contentEn.trim(), hi: (entry.contentHi || entry.contentEn).trim() };
+  if (!title.en && !content.en) return { story: null, withheld: false };
+  const guard = buildNameGuard(data.users);
+  const named = [entry.titleEn, entry.titleHi, entry.contentEn, entry.contentHi].some((x) => guard.mentionsFullNameOrContact(x));
+  return named ? { story: null, withheld: true } : { story: { title, content }, withheld: false };
+}
+
+/** The committee's story of a year, unless it names a person, a phone or an email. */
+export function storyFor(data: PortalData, year: YearSel): YearPack['story'] {
+  return readStory(data, year).story;
+}
+
+/** True when the year has a story that was held back because it names someone. */
+export function storyWithheld(data: PortalData, year: YearSel): boolean {
+  return readStory(data, year).withheld;
+}
+
+/** Everything the page for one year says, from the same functions the individual pages use. */
+export function yearPack(data: PortalData, year: YearSel, now: Date): YearPack {
+  return {
+    year,
+    home: homeFacts(data, year, now),
+    contributors: contributorsFacts(data, year),
+    expenses: expensesFacts(data, year),
+    loans: loansFacts(data, year),
+    committee: committeeFacts(data, year),
+    story: storyFor(data, year),
+  };
 }

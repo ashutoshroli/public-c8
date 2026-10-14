@@ -7,7 +7,7 @@
   import AccountsText from '$lib/components/AccountsText.svelte';
   import CountUp from '$lib/components/CountUp.svelte';
   import { portalState, year, refreshPortal } from '$lib/stores/portal';
-  import { tr, lang } from '$lib/stores/lang';
+  import { tr, lang, lp } from '$lib/stores/lang';
   import {
     computeFinancials,
     computeSummary,
@@ -64,7 +64,7 @@
   <!-- The meta description for this page comes from ROUTES via Seo.svelte. A second one here made
        the home page the only page with two, and two descriptions is the signal that no one is
        in charge of the snippet. -->
-  <title>Chhath Puja Transparency Portal — Navyuvak Chhath Puja Samiti</title>
+  <title>{$tr('social_title')}</title>
 </svelte:head>
 
 {#if $portalState.failed}
@@ -200,7 +200,7 @@
 
   <!-- Journey -->
   <a
-    href="/decade"
+    href={$lp('/decade')}
     aria-label={$tr('decade_title')}
     class="surface mt-4 flex items-center gap-4 p-5 transition-colors hover:bg-canvas"
   >

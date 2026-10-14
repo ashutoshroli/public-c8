@@ -98,8 +98,9 @@ describe('clearAnalyticsCookies', () => {
 describe('wiring: every page reaches the notices and the choice', () => {
   it('the footer (rendered by Shell on every page) links Privacy, Terms and Cookie settings', () => {
     const footer = read('lib/components/FooterLinks.svelte');
-    expect(footer).toContain('href="/privacy"');
-    expect(footer).toContain('href="/terms"');
+    // Through $lp(), so that on a Hindi page the links stay on the Hindi pages.
+    expect(footer).toContain("href={$lp('/privacy')}");
+    expect(footer).toContain("href={$lp('/terms')}");
     expect(footer).toContain("consentPanelOpen.set(true)");
     expect(read('lib/components/Shell.svelte')).toContain('<FooterLinks />');
   });
@@ -113,8 +114,8 @@ describe('wiring: every page reaches the notices and the choice', () => {
   });
 
   it('privacy and terms link to each other', () => {
-    expect(read('routes/privacy/+page.svelte')).toContain('href="/terms"');
-    expect(read('routes/terms/+page.svelte')).toContain('href="/privacy"');
+    expect(read('routes/privacy/+page.svelte')).toMatch(/href=\{\$lp\('\/terms'\)\}/);
+    expect(read('routes/terms/+page.svelte')).toMatch(/href=\{\$lp\('\/privacy'\)\}/);
   });
 
   it('both languages have every consent and footer string', () => {

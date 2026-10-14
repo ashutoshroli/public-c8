@@ -15,8 +15,11 @@ const read = (p: string) => readFileSync(join(ROOT, p), 'utf8');
 describe('English first load does not fetch the Devanagari webfont', () => {
   it('the language toggle is drawn in a device font', () => {
     const shell = read('src/lib/components/Shell.svelte');
-    const btn = shell.slice(shell.lastIndexOf('<button', shell.indexOf("'हिंदी'")), shell.indexOf("'हिंदी'"));
-    expect(btn).toContain('font-system');
+    // The language control is a link to the same page in the other language (/hi/…), so a crawler
+    // and a visitor without scripts can follow it.
+    const link = shell.slice(shell.lastIndexOf('<a', shell.indexOf("'हिंदी'")), shell.indexOf("'हिंदी'"));
+    expect(link).toContain('font-system');
+    expect(link).toContain('href={other.path}');
   });
 
   it('font-system really is webfont-free', () => {

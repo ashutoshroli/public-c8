@@ -6,6 +6,9 @@
 // drifts eventually; generating it from the same table the canonical tags come from means the two
 // cannot disagree, and a test asserts the table matches the routes on disk.
 //
+// It lists every page twice, once per language, each with its hreflang alternates, and a page for
+// every year that has records (/2025, /hi/2025).
+//
 // Prerendered, so this stays a fully static site with no server at runtime.
 import { config } from '$lib/config';
 import { sitemapXml } from '$lib/seo';
@@ -14,7 +17,7 @@ import { snapshot } from '$lib/snapshot';
 export const prerender = true;
 
 export function GET() {
-  return new Response(sitemapXml(config.siteUrl, { lastmod: snapshot?.asOf }), {
+  return new Response(sitemapXml(config.siteUrl, { lastmod: snapshot?.asOf, years: snapshot?.years }), {
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',
       // A sitemap is cheap and read rarely; an hour keeps a crawler from re-fetching it on

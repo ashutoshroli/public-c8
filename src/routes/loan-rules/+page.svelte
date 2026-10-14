@@ -2,7 +2,7 @@
   import PageHeading from '$lib/components/PageHeading.svelte';
   import Rich from '$lib/components/Rich.svelte';
   // Imported as `tl`: a store named `tr` would make Svelte read the <tr> table-row tags as components.
-  import { tr as tl } from '$lib/stores/lang';
+  import { tr as tl, lp } from '$lib/stores/lang';
   import { CONTACT_EMAIL } from '$lib/contact';
   import {
     GUARANTOR_COUNT_SINCE,
@@ -155,8 +155,8 @@
     <a href="mailto:{CONTACT_EMAIL}" class="font-semibold text-brand-700 underline underline-offset-2">{CONTACT_EMAIL}</a>
   </p>
   <p>
-    <a href="/committee" class="font-semibold text-brand-700 underline underline-offset-2">{$tl('contact_committee_link')}</a>
+    <a href={$lp('/committee')} class="font-semibold text-brand-700 underline underline-offset-2">{$tl('contact_committee_link')}</a>
     ·
-    <a href="/loans" class="font-semibold text-brand-700 underline underline-offset-2">{$tl('lr_back_loans')}</a>
+    <a href={$lp('/loans')} class="font-semibold text-brand-700 underline underline-offset-2">{$tl('lr_back_loans')}</a>
   </p>
 </article>
