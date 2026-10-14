@@ -88,6 +88,9 @@ shared and bookmarked, and says so to search engines:
   paints. Crawlers have no browser storage, so they see English at the English address and Hindi at
   `/hi/…`. Files (`robots.txt`, `sitemap.xml`, `llms.txt`, `/.well-known/…`) have one address and are
   never redirected.
+- **Old links:** the WhatsApp and e-mail templates still send `https://…/#downloads` (from when Downloads
+  was a section of the home page). The same early script sends that exact link to the Downloads page
+  (`/hi/downloads` for a Hindi visitor), keeping any `?query` and dropping the fragment.
 - The Hindi route files are wrappers around the English page components, so the two cannot drift
   apart. A new page needs its `ROUTES` entry (incl. `descriptionHi`) and a wrapper under `src/routes/hi/`
   — a test fails until both exist.
