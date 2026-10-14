@@ -38,11 +38,17 @@ export interface RouteMeta {
    * allowed to fetch.
    */
   noindex?: boolean;
+  /**
+   * The page's HTML carries the accounts snapshot (lib/snapshot), which changes with every build.
+   * Only these routes get a sitemap `lastmod`: for the rest the build date would be a lie.
+   */
+  data?: boolean;
 }
 
 export const ROUTES: RouteMeta[] = [
   {
     path: '',
+    data: true,
     titleKey: 'app_title',
     description:
       'Every contribution visible, every expense accountable. Live financial transparency for Navyuvak Chhath Puja Samiti, Shaharpura, Gardih.',
@@ -51,6 +57,7 @@ export const ROUTES: RouteMeta[] = [
   },
   {
     path: '/contributors',
+    data: true,
     titleKey: 'contributors_list',
     description:
       'The full list of contributors to Navyuvak Chhath Puja Samiti, with amounts and years, exactly as recorded in the committee ledger.',
@@ -59,6 +66,7 @@ export const ROUTES: RouteMeta[] = [
   },
   {
     path: '/expenses',
+    data: true,
     titleKey: 'expenses_ledger',
     description:
       'Every rupee spent by Navyuvak Chhath Puja Samiti, itemised by category and year, open for anyone in the village to check.',
@@ -67,6 +75,7 @@ export const ROUTES: RouteMeta[] = [
   },
   {
     path: '/loans',
+    data: true,
     titleKey: 'loan_distribution',
     description:
       'Loans issued from the committee fund: amount, guarantors, status and repayment, published so lending stays accountable.',
@@ -75,6 +84,7 @@ export const ROUTES: RouteMeta[] = [
   },
   {
     path: '/committee',
+    data: true,
     titleKey: 'active_committee',
     description:
       'The people responsible for Navyuvak Chhath Puja Samiti this year, with the role each of them holds.',
@@ -83,6 +93,7 @@ export const ROUTES: RouteMeta[] = [
   },
   {
     path: '/decade',
+    data: true,
     titleKey: 'decade_title',
     description:
       'Ten years of Chhath Puja at Shaharpura: contributions, spending and participation, year by year.',
@@ -209,14 +220,16 @@ export function canonicalFor(siteUrl: string, pathname: string): string {
  * `noindex` routes are left out: a sitemap is a list of pages you WANT indexed, and offering a
  * page that also says `noindex` is a contradiction Search Console reports as an error.
  *
- * `lastmod` is deliberately absent rather than faked to the build date: a build does not mean
- * the content changed, and a sitemap that claims every page changed at every deploy trains
- * crawlers to ignore the field.
+ * `lastmod` appears only on the pages whose HTML carries the accounts snapshot (`data: true`),
+ * and only when there is a snapshot: its date is the day the data was read, which is the day
+ * that text was last true. On the other pages a build does not mean the content changed, and a
+ * sitemap that claims every page changed at every deploy trains crawlers to ignore the field.
  */
-export function sitemapXml(siteUrl: string): string {
+export function sitemapXml(siteUrl: string, opts: { lastmod?: string } = {}): string {
   const urls = indexableRoutes().map((r) => {
     const loc = canonicalFor(siteUrl, r.path);
-    return `  <url><loc>${loc}</loc><changefreq>${r.changefreq}</changefreq><priority>${r.priority}</priority></url>`;
+    const lastmod = r.data && opts.lastmod ? `<lastmod>${opts.lastmod}</lastmod>` : '';
+    return `  <url><loc>${loc}</loc>${lastmod}<changefreq>${r.changefreq}</changefreq><priority>${r.priority}</priority></url>`;
   }).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
 }

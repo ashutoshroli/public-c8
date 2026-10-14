@@ -9,11 +9,12 @@
 // Prerendered, so this stays a fully static site with no server at runtime.
 import { config } from '$lib/config';
 import { sitemapXml } from '$lib/seo';
+import { snapshot } from '$lib/snapshot';
 
 export const prerender = true;
 
 export function GET() {
-  return new Response(sitemapXml(config.siteUrl), {
+  return new Response(sitemapXml(config.siteUrl, { lastmod: snapshot?.asOf }), {
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',
       // A sitemap is cheap and read rarely; an hour keeps a crawler from re-fetching it on

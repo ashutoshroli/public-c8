@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Search } from '@lucide/svelte';
   import PageHeading from '$lib/components/PageHeading.svelte';
+  import AccountsText from '$lib/components/AccountsText.svelte';
   import ContributorCard from '$lib/components/ContributorCard.svelte';
   import ContributorDetail from '$lib/components/ContributorDetail.svelte';
   import EmptyState from '$lib/components/EmptyState.svelte';
@@ -86,5 +87,7 @@
     </div>
   {/if}
 {/if}
+
+<AccountsText page="contributors" />
 
 <ContributorDetail entry={selected} onclose={() => (selected = null)} />

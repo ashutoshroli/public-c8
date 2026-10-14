@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Info } from '@lucide/svelte';
   import PageHeading from '$lib/components/PageHeading.svelte';
+  import AccountsText from '$lib/components/AccountsText.svelte';
   import { tr, lang } from '$lib/stores/lang';
   import { portalState } from '$lib/stores/portal';
   import { decadeStats, journeyEntries, journeyTagline, journeyText, interp } from '$lib/api/derive';
@@ -171,6 +172,8 @@
       <p>{T('closing_p3', 'decade_closing_p3')}</p>
     </div>
   </section>
+
+  <AccountsText page="decade" />
 
   <p class="text-center text-sm text-muted">{T('footer', 'decade_footer')}</p>
   <p class="text-center text-sm font-semibold text-brand-700">{$tr('seva_line')}</p>
