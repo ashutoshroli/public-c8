@@ -36,6 +36,34 @@ node scripts/gen-icons.mjs        # PWA icons from static/logo.svg
 node scripts/gen-screenshots.mjs  # app-listing screenshots
 ```
 
+## The accounts in words (what search engines and AI can read)
+The pages are drawn in the browser from the public API, so the HTML a crawler downloads used to be
+an empty frame. Under each data page (Home, Expenses, Loans, Committee, Contributors, 10 Years) there
+is now a section **"The accounts in words"**: the same figures as plain sentences, written into the
+HTML when the site is **built** from the data the API returns at that moment.
+
+- **Visitors still get live data.** The section shows the build-time text until the live data loads,
+  then switches to the same sentences from the live data (labelled "Live figures"), or "Saved
+  figures" when offline. A redeploy only refreshes what crawlers see.
+- **Refreshing it:** Vercel → *Deployments* → the latest **Production** deployment → ⋯ → **Redeploy**.
+  The build re-reads the API, so the text, the "as of" date and the sitemap `lastmod` move together.
+  (Untick "Use existing Build Cache" if you want to be certain nothing is reused.)
+- **If the API cannot be reached the build FAILS** (3 tries). That is deliberate: Vercel then keeps
+  serving the *previous deployment*, which still has the last good text, instead of replacing it with
+  an empty section. Check the Worker, then redeploy.
+- **Emergency switches** (Vercel → Project Settings → Environment Variables; leave unset normally):
+  `CPM_SNAPSHOT_ALLOW_EMPTY=1` builds without a snapshot if the API is unreachable;
+  `CPM_SNAPSHOT=off` skips the snapshot (and the network) altogether.
+- **It names no one.** Counts, totals, roles, and villages with at least 5 contributors; never a
+  contributor, committee member, borrower or guarantor, father's name, photo, mobile number or an
+  individual's amount. Expense lines are published as written, except a line that contains a known
+  person's name, a phone number or an email, which is folded into "Other items" (the amount still
+  counts). The build log says how many lines were folded.
+- `/llms-full.txt` is the same text for every page in one file; `/llms.txt` links to it.
+
+Code: `src/lib/snapshot/` (facts → sentences, build-time fetch, Vite plugin) and
+`src/lib/components/AccountsText.svelte`.
+
 ## Design tokens
 `tailwind.config.ts` me `brand` (hara), `canvas`, `ink`, `muted`, `line`. Card = `.surface`,
 list = `.rows`, input = `.field` (src/app.css).

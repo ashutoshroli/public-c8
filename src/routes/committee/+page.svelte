@@ -1,6 +1,7 @@
 <script lang="ts">
   import { MapPin, Phone, MessageCircle, LogIn } from '@lucide/svelte';
   import PageHeading from '$lib/components/PageHeading.svelte';
+  import AccountsText from '$lib/components/AccountsText.svelte';
   import EmptyState from '$lib/components/EmptyState.svelte';
   import ErrorState from '$lib/components/ErrorState.svelte';
   import SkeletonList from '$lib/components/SkeletonList.svelte';
@@ -94,3 +95,5 @@
     {/each}
   </ul>
 {/if}
+
+<AccountsText page="committee" />

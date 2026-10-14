@@ -1,6 +1,7 @@
 <script lang="ts">
   import { ShieldCheck, ShieldAlert, MapPin, CircleCheck } from '@lucide/svelte';
   import PageHeading from '$lib/components/PageHeading.svelte';
+  import AccountsText from '$lib/components/AccountsText.svelte';
   import EmptyState from '$lib/components/EmptyState.svelte';
   import ErrorState from '$lib/components/ErrorState.svelte';
   import SkeletonList from '$lib/components/SkeletonList.svelte';
@@ -144,3 +145,5 @@
     <a href="/loan-rules" class="font-semibold text-brand-700 underline underline-offset-2">{$tr('loan_rules_link')}</a>
   </p>
 {/if}
+
+<AccountsText page="loans" />

@@ -12,12 +12,16 @@ import { IARC_RATING_ID } from './src/lib/ratings.ts';
 // Same idea for the service worker's navigation fallback: one module, so the build and the test
 // that exercises the patterns cannot disagree.
 import { NAVIGATE_FALLBACK_DENYLIST } from './src/lib/swNavigation.ts';
+// The accounts text in the HTML is written from data read at BUILD time. This plugin fetches it
+// (with retries; a failed fetch fails the build on purpose) and offers it to the server bundle only.
+import { buildPayloadPlugin } from './src/lib/snapshot/vitePlugin.ts';
 
 // PWA: app-shell offline support. Static assets are precached; the portal API
 // (Cloudflare Worker) uses NetworkFirst so visitors always get fresh data when
 // online but still see a usable shell + last-good data when offline.
 export default defineConfig({
   plugins: [
+    buildPayloadPlugin(),
     sveltekit(),
     SvelteKitPWA({
       registerType: 'autoUpdate',

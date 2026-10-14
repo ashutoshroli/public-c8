@@ -4,11 +4,12 @@
 // site stays fully static, exactly like /sitemap.xml next to it.
 import { config } from '$lib/config';
 import { llmsTxt } from '$lib/crawlerFiles';
+import { snapshot } from '$lib/snapshot';
 
 export const prerender = true;
 
 export function GET() {
-  return new Response(llmsTxt(config.siteUrl), {
+  return new Response(llmsTxt(config.siteUrl, { fullTextAsOf: snapshot?.asOf }), {
     headers: {
       'Content-Type': 'text/plain; charset=utf-8',
       'Cache-Control': 'public, max-age=3600',

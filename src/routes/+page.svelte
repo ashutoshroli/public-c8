@@ -4,6 +4,7 @@
   import ContributorDetail from '$lib/components/ContributorDetail.svelte';
   import ContributorsListModal from '$lib/components/ContributorsListModal.svelte';
   import ErrorState from '$lib/components/ErrorState.svelte';
+  import AccountsText from '$lib/components/AccountsText.svelte';
   import CountUp from '$lib/components/CountUp.svelte';
   import { portalState, year, refreshPortal } from '$lib/stores/portal';
   import { tr, lang } from '$lib/stores/lang';
@@ -213,6 +214,8 @@
     </span>
   </a>
 {/if}
+
+<AccountsText page="home" />
 
 <ContributorDetail entry={selected} onclose={() => (selected = null)} />
 <ContributorsListModal open={listOpen} onclose={() => (listOpen = false)} />
