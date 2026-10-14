@@ -23,15 +23,21 @@ const ID = 'virtual:cpm-build-payload';
 const RESOLVED = `\0${ID}`;
 const EMPTY = 'export default null;';
 
-/** `tuning` exists for tests (no real waiting between attempts); the build passes nothing. */
+/** `tuning` exists for tests (no real waiting, a fake API address); the build passes nothing. */
 export function buildPayloadPlugin(
   env: Record<string, string | undefined> = process.env,
-  tuning: Pick<FetchOptions, 'attempts' | 'backoffMs' | 'sleep' | 'timeoutMs'> = {},
+  tuning: Partial<Pick<FetchOptions, 'apiBase' | 'attempts' | 'backoffMs' | 'sleep' | 'timeoutMs'>> = {},
 ): Plugin {
   let command: 'build' | 'serve' = 'serve';
   let pending: Promise<BuildPayload | null> | null = null;
 
-  const apiBase = () => (env.PUBLIC_API_BASE ?? '').trim() || DEFAULTS.PUBLIC_API_BASE;
+  // The API the LIVE page reads, and so the one the snapshot must read: both must describe the same
+  // ledger. The client resolves it in src/lib/config.ts from `import.meta.env.PUBLIC_API_BASE`,
+  // which Vite does not expose (only VITE_* is), so in practice it is always the default below.
+  // This plugin therefore ignores the PUBLIC_API_BASE environment variable too; honouring it here
+  // while the browser ignores it would publish one API's figures next to another's. If the client
+  // is ever made to honour it, change both together.
+  const apiBase = () => tuning.apiBase ?? DEFAULTS.PUBLIC_API_BASE;
 
   return {
     name: 'cpm-build-payload',

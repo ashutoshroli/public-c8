@@ -15,6 +15,8 @@ import { NAVIGATE_FALLBACK_DENYLIST } from './src/lib/swNavigation.ts';
 // The accounts text in the HTML is written from data read at BUILD time. This plugin fetches it
 // (with retries; a failed fetch fails the build on purpose) and offers it to the server bundle only.
 import { buildPayloadPlugin } from './src/lib/snapshot/vitePlugin.ts';
+// The offline shell's cache revision (see that file for why it is not the commit).
+import { shellRevision } from './src/lib/shellRevision.ts';
 
 // PWA: app-shell offline support. Static assets are precached; the portal API
 // (Cloudflare Worker) uses NetworkFirst so visitors always get fresh data when
@@ -25,6 +27,15 @@ export default defineConfig({
     sveltekit(),
     SvelteKitPWA({
       registerType: 'autoUpdate',
+      // The offline app shell. The static adapter writes the single-page-app fallback a second
+      // time as /app-shell (svelte.config.js) and this tells the plugin to precache it. Its
+      // revision follows the names of the hashed files it points at, so the shell is downloaded
+      // again when the code (or a PUBLIC_* value baked into it) changes, and NOT when the accounts
+      // snapshot is refreshed.
+      kit: {
+        adapterFallback: 'app-shell.html',
+        spa: { fallbackMapping: '/app-shell', fallbackRevision: shellRevision }
+      },
       manifest: {
         // App identity — the stable manifest id for this PWA. Kept as '/' (it
         // must never change once published, or stores treat it as a NEW app).
@@ -123,6 +134,11 @@ export default defineConfig({
         //    visitors never download it and Hindi still works offline after one use.
         // (globs are matched under .svelte-kit/output, i.e. behind a client/ prefix, hence **/)
         globIgnores: [
+          // The prerendered PAGES are not precached any more (see navigateFallback below). Their
+          // HTML carries the accounts snapshot, which changes with every redeploy: precached, each
+          // refresh would have made every installed app fetch a new service worker, re-download
+          // all the pages and reload. They are not needed offline — the shell renders any route.
+          '**/prerendered/pages/**',
           '**/screenshots/**',
           '**/icons/icon-512*.png',
           '**/og-image.png',
@@ -130,10 +146,13 @@ export default defineConfig({
           '**/favicon.ico',
           '**/fonts/noto-sans-devanagari-*.woff2'
         ],
-        // The plugin sets navigateFallback to '/', so ANY navigation that is not a precached page
-        // gets the cached app shell. A browser asking for a FILE (/robots.txt, /llms.txt,
+        // Every navigation answers with the precached app shell, and the client router renders the
+        // requested route from the JavaScript that is already in the cache. (This must be the URL
+        // the manifest entry above has — '/app-shell' — or Workbox throws while the worker starts
+        // and the install fails.) A browser asking for a FILE (/robots.txt, /llms.txt,
         // /sitemap.xml, /.well-known/security.txt) must reach the network instead — see
         // src/lib/swNavigation.ts for why this matters and what it matches.
+        navigateFallback: '/app-shell',
         navigateFallbackDenylist: NAVIGATE_FALLBACK_DENYLIST,
         // Pull the push/notification event handlers into the generated service
         // worker. Kept as a separate static script (static/push-sw.js) on purpose:

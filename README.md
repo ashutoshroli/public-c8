@@ -59,10 +59,23 @@ HTML when the site is **built** from the data the API returns at that moment.
   individual's amount. Expense lines are published as written, except a line that contains a known
   person's name, a phone number or an email, which is folded into "Other items" (the amount still
   counts). The build log says how many lines were folded.
+- **Refreshing does not disturb installed apps.** The pages are not in the offline cache, and the app
+  version is the *commit* (not a timestamp), so redeploying the same commit builds an identical
+  service worker: installed apps download nothing and do not reload. (Check: `npm run build` twice;
+  `build/sw.js` is byte-identical.)
 - `/llms-full.txt` is the same text for every page in one file; `/llms.txt` links to it.
 
 Code: `src/lib/snapshot/` (facts → sentences, build-time fetch, Vite plugin) and
 `src/lib/components/AccountsText.svelte`.
+
+## Offline
+The service worker precaches the app's code, fonts and icons plus one **app shell** (`/app-shell`,
+the single-page-app fallback that `adapter-static` writes a second time; `404.html` is the same page
+served with a 404 for unknown URLs). Every page navigation is answered with that shell and the router
+draws the route from cached JavaScript, with data from the visitor's last saved copy. Navigations to
+*files* (`/robots.txt`, `/llms.txt`, `/sitemap.xml`, `/.well-known/…`) are left to the network.
+`npm run build && npm test` also runs the generated worker for real (install, then navigations online
+and offline); without a build those tests are skipped.
 
 ## Design tokens
 `tailwind.config.ts` me `brand` (hara), `canvas`, `ink`, `muted`, `line`. Card = `.surface`,

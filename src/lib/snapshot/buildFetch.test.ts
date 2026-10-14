@@ -195,7 +195,7 @@ describe('the virtual module: data for the server bundle, nothing for anyone els
 
   type LoadFn = (id: string, options?: { ssr?: boolean }) => Promise<string | null>;
   function plugin(env: Record<string, string | undefined>, command: 'build' | 'serve' = 'build') {
-    const p = buildPayloadPlugin(env, { sleep: async () => {}, backoffMs: [0, 0] });
+    const p = buildPayloadPlugin(env, { apiBase: API, sleep: async () => {}, backoffMs: [0, 0] });
     (p.configResolved as unknown as (c: { command: string }) => void)({ command });
     const load = (p.load as unknown as LoadFn).bind({});
     const resolveId = (p.resolveId as unknown as (id: string) => string | null).bind({});
@@ -217,7 +217,7 @@ describe('the virtual module: data for the server bundle, nothing for anyone els
 
   it('gives the SERVER build the fetched data, as an ES module', async () => {
     const api = stubApi();
-    const { load } = plugin({ PUBLIC_API_BASE: API });
+    const { load } = plugin({});
     const code = (await load(RESOLVED, { ssr: true }))!;
     expect(code.startsWith('export default {')).toBe(true);
     const payload = JSON.parse(code.slice('export default '.length, -1));
@@ -267,6 +267,21 @@ describe('the virtual module: data for the server bundle, nothing for anyone els
     const api = stubApi();
     expect(await plugin({ CPM_SNAPSHOT: 'off' }).load(RESOLVED, { ssr: true })).toBe(EMPTY);
     expect(api).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
+  it('reads the API the live page reads, and ignores a PUBLIC_API_BASE the client build would ignore', async () => {
+    // Vite exposes only VITE_* to import.meta.env, so config.ts always resolves the default; if this
+    // plugin honoured the variable, the snapshot and the live page could describe two different ledgers.
+    const impl = vi.fn(async (input: RequestInfo | URL) =>
+      String(input).includes('dataVersion') ? json({ v: '7' }) : json(LEDGER));
+    vi.stubGlobal('fetch', impl);
+    const p = buildPayloadPlugin({ PUBLIC_API_BASE: 'https://elsewhere.example' }, { sleep: async () => {}, backoffMs: [0, 0] });
+    (p.configResolved as unknown as (c: { command: string }) => void)({ command: 'build' });
+    await (p.load as unknown as LoadFn).call({}, RESOLVED, { ssr: true });
+    const { DEFAULTS } = await import('../config');
+    expect(String(impl.mock.calls[0][0])).toBe(`${DEFAULTS.PUBLIC_API_BASE}/?action=dataVersion`);
+    expect(impl.mock.calls.every((c) => !String(c[0]).includes('elsewhere'))).toBe(true);
     vi.unstubAllGlobals();
   });
 

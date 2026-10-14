@@ -523,6 +523,11 @@ describe('an unknown URL is a real 404, not a copy of the app', () => {
   });
 
   it('the service worker is not configured with the old fallback name', () => {
-    expect(text('vite.config.ts')).not.toMatch(/200\.html|adapterFallback/);
+    const cfg = text('vite.config.ts');
+    expect(cfg).not.toMatch(/200\.html/);
+    // The offline shell is its own 200-status copy of the fallback (see swShell.test.ts); the
+    // 404.html that Vercel serves with a 404 can never be precached, because Workbox refuses it.
+    expect(cfg).toMatch(/adapterFallback: 'app-shell\.html'/);
+    expect(cfg).not.toMatch(/adapterFallback: '404\.html'/);
   });
 });
