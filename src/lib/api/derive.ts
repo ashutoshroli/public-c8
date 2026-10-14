@@ -864,33 +864,67 @@ export function verifyRecord(data: PortalData, recordId: string): VerifyResult {
   return base;
 }
 
-/** Distinct, sorted village names from users. */
-export function villages(data: PortalData, lang: 'en' | 'hi' = 'en'): string[] {
-  const set = new Set<string>();
-  for (const u of data.users || []) {
-    const v = ((lang === 'hi' ? u['Village (Hindi)'] : u.Village) ?? u.Village ?? '').toString().trim();
-    if (v) set.add(v);
-  }
-  return [...set].sort((a, b) => a.localeCompare(b));
+// ---- The Download Center's village picker ----
+//
+// A village is IDENTIFIED by one name and SHOWN in the visitor's language. The picker used to use
+// the name it showed as its value: in Hindi that was the Hindi spelling, while the people were still
+// matched on the ENGLISH one, so on /hi/downloads no village ever matched anyone and every search
+// came back empty (English worked, because both sides were English). It also dropped a village
+// altogether in Hindi when none of its people had a Hindi spelling on file.
+//
+// Now the option's value is the village's English name — the same in both languages, and what
+// people are matched on — and only its label changes with the language.
+
+export interface VillageOption {
+  /** The village's identity: its English name. */
+  value: string;
+  /** How it reads for the visitor: the Hindi spelling in Hindi when any user of the village has one, else English. */
+  label: string;
 }
 
-/** Users in a village (optionally name-filtered), capped for a fast picker. */
+/** The village a user belongs to, by its English name ('' when none is on file). */
+export function villageOf(u: UserRow): string {
+  return (u.Village ?? '').toString().trim();
+}
+
+/** Distinct villages for the picker, sorted by how they read in `lang`. */
+export function villageOptions(data: PortalData, lang: 'en' | 'hi' = 'en'): VillageOption[] {
+  // English name -> the first Hindi spelling any of its people has ('' if none does).
+  const hindi = new Map<string, string>();
+  for (const u of data.users || []) {
+    const en = villageOf(u);
+    if (!en) continue;
+    const hi = (u['Village (Hindi)'] ?? '').toString().trim();
+    if (!hindi.get(en)) hindi.set(en, hi);
+  }
+  const collator = new Intl.Collator(lang === 'hi' ? 'hi' : 'en');
+  return [...hindi]
+    .map(([value, hi]) => ({ value, label: lang === 'hi' && hi ? hi : value }))
+    .sort((a, b) => collator.compare(a.label, b.label));
+}
+
+// Text typed into the search box is compared as the same characters even when the keyboard and the
+// ledger spell a letter differently: Devanagari "ड़" can be one code point (U+095C) or ड + a nukta
+// (U+0921 U+093C), and phones type the second while a sheet may hold the first. NFC makes them one.
+const searchable = (v: unknown) => (v ?? '').toString().normalize('NFC').toLowerCase().trim();
+
+/**
+ * Users in a village (optionally name-filtered), capped for a fast picker. `village` is a
+ * VillageOption.value, i.e. the village's English name, whatever language the page is in.
+ */
 export function peopleInVillage(
   data: PortalData,
   village: string,
   query = '',
   limit = 50
 ): UserRow[] {
-  const q = query.trim().toLowerCase();
+  const q = searchable(query);
+  const where = (village ?? '').toString().trim();
+  // No village chosen is not "the users who have no village".
+  if (!where) return [];
   return (data.users || [])
-    .filter((u) => (u.Village ?? '').toString().trim() === village)
-    .filter((u) => {
-      if (!q) return true;
-      return (
-        (u.Name ?? '').toString().toLowerCase().includes(q) ||
-        (u['Name (Hindi)'] ?? '').toString().toLowerCase().includes(q)
-      );
-    })
+    .filter((u) => villageOf(u) === where)
+    .filter((u) => !q || searchable(u.Name).includes(q) || searchable(u['Name (Hindi)']).includes(q))
     .slice(0, limit);
 }
 
