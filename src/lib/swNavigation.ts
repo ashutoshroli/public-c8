@@ -1,11 +1,12 @@
 // Which navigations the service worker must NOT answer with the cached app shell.
 //
-// Workbox's navigation fallback (`navigateFallback: '/'`, set by @vite-pwa/sveltekit) answers
-// every navigation request that is not a precached page with the cached home page, so the client
-// router can take over. That is right for a page URL and wrong for a FILE.
+// Workbox's navigation fallback (`navigateFallback: '/app-shell'`, see vite.config.ts) answers
+// every navigation request that is not a precached URL with the cached app shell, so the client
+// router can take over and draw the requested route. That is right for a page URL and wrong for a
+// FILE.
 //
-// With it, opening /robots.txt, /sitemap.xml, /llms.txt or /.well-known/security.txt in a browser
-// that already has the portal installed returned the home page's shell, which then rendered the
+// Without this, opening /robots.txt, /sitemap.xml, /llms.txt or /.well-known/security.txt in a
+// browser that already has the portal installed returned the shell, which then rendered the
 // portal's own 404 page. The committee checking its own robots.txt would conclude the file was
 // missing. Crawlers have no service worker, which is exactly why this could never show up in a
 // crawl and had to be found by reasoning about the browser.
