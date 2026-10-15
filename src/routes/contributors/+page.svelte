@@ -2,7 +2,7 @@
   import { Search } from '@lucide/svelte';
   import PageHeading from '$lib/components/PageHeading.svelte';
   import AccountsText from '$lib/components/AccountsText.svelte';
-  import ContributorCard from '$lib/components/ContributorCard.svelte';
+  import ContributorRow from '$lib/components/ContributorRow.svelte';
   import ContributorDetail from '$lib/components/ContributorDetail.svelte';
   import EmptyState from '$lib/components/EmptyState.svelte';
   import ErrorState from '$lib/components/ErrorState.svelte';
@@ -69,19 +69,23 @@
     </select>
   </div>
 
+  <!-- A list of rows. One column on a phone, where the name needs the whole width; two on a
+       tablet and three on a wide screen, so the page is no longer than it was there. -->
   {#if loading}
-    <div class="grid grid-cols-3 gap-2.5 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6">
-      {#each Array(12) as _}<div class="skeleton h-[132px] rounded-xl"></div>{/each}
+    <div class="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
+      {#each Array(10) as _}<div class="skeleton h-[68px] rounded-xl"></div>{/each}
     </div>
   {:else if view.length === 0}
     <EmptyState message={debounced ? $tr('no_matches') : $tr('no_records_found')} />
   {:else}
     <p class="mb-2 text-xs text-muted">{$tr('total_contributions', { count: view.length })}</p>
-    <div class="grid grid-cols-3 gap-2.5 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6">
+    <ul class="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
       {#each view as entry (entry.item.key)}
-        <ContributorCard {entry} compact={false} onclick={() => (selected = entry)} />
+        <!-- `flex` so the row fills the grid cell: in two or three columns the cell is as tall as
+             the tallest row beside it, and the box must be too, or the bottoms are ragged. -->
+        <li class="flex"><ContributorRow {entry} onclick={() => (selected = entry)} /></li>
       {/each}
-    </div>
+    </ul>
   {/if}
 {/if}
 
