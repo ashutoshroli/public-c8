@@ -14,7 +14,7 @@ import {
   journeyEntries,
   journeyTagline
 } from './derive';
-import { competitionRank } from '$lib/utils/ranking';
+import { denseRank } from '$lib/utils/ranking';
 import { resolveConfig, DEFAULTS } from '$lib/config';
 import { t, localize } from '$lib/i18n';
 
@@ -103,33 +103,38 @@ describe('loan interest helper', () => {
   });
 });
 
-describe('competition ranking (reference example)', () => {
+describe('dense ranking: the Top 5 are the five highest amounts', () => {
   const data = parsePortalData(sample)!;
   const ranked = rankedContributors(data, 2026);
 
-  it('produces 1,1,3,4,4 with top-5 flags and no rank leakage below', () => {
+  it('gives 1,1,2,3,3,4,5 — equal amounts share a number and none is skipped', () => {
+    // 2100 2100 | 1501 | 1000 1000 | 786 | 600 | 500   (500 is the sixth amount)
     const byName = Object.fromEntries(ranked.map((r) => [r.item.name, r]));
     expect(byName['Ravi Kumar'].rank).toBe(1);
-    expect(byName['Ravi Kumar'].isTop).toBe(true);
     expect(byName['Sanjeet Kumar'].rank).toBe(1);
-    expect(byName['Sanjeet Kumar'].isTop).toBe(true);
-    expect(byName['Abhishek Verma'].rank).toBe(3);
-    expect(byName['Abhishek Verma'].isTop).toBe(true);
-    expect(byName['Govind Verma'].rank).toBe(4);
-    expect(byName['Govind Verma'].isTop).toBe(true);
-    expect(byName['Pintu Kumar'].rank).toBe(4);
-    expect(byName['Pintu Kumar'].isTop).toBe(true);
-    // Below top-5: still ranked, but NOT flagged as top.
-    expect(byName['Aarohi Bharti'].isTop).toBe(false);
+    expect(byName['Abhishek Verma'].rank).toBe(2);
+    expect(byName['Govind Verma'].rank).toBe(3);
+    expect(byName['Pintu Kumar'].rank).toBe(3);
+    expect(byName['Aarohi Bharti'].rank).toBe(4);
+    expect(byName['Sunil Das'].rank).toBe(5);
+    for (const n of ['Ravi Kumar', 'Sanjeet Kumar', 'Abhishek Verma', 'Govind Verma', 'Pintu Kumar', 'Aarohi Bharti', 'Sunil Das']) {
+      expect(byName[n].isTop, n).toBe(true);
+    }
+  });
+
+  it('seven people are in the Top 5 here (five amounts), and the sixth amount is not', () => {
+    const byName = Object.fromEntries(ranked.map((r) => [r.item.name, r]));
+    expect(ranked.filter((r) => r.isTop)).toHaveLength(7);
+    expect(byName['Manish Kumar'].rank).toBe(6);
     expect(byName['Manish Kumar'].isTop).toBe(false);
   });
 
-  it('a 6th distinct rank appears only after the ties (no dense ranking)', () => {
-    const ranks = competitionRank(
+  it('counts amounts, not people: the number after a tie is the next number', () => {
+    const ranks = denseRank(
       [{ a: 10 }, { a: 10 }, { a: 5 }, { a: 3 }, { a: 3 }, { a: 1 }],
       (x) => x.a
     ).map((r) => r.rank);
-    expect(ranks).toEqual([1, 1, 3, 4, 4, 6]);
+    expect(ranks).toEqual([1, 1, 2, 3, 3, 4]); // it used to be 1, 1, 3, 4, 4, 6
   });
 });
 
@@ -169,9 +174,12 @@ describe('display order: EVERYONE in entry (SL No.) order, top-5 flagged in plac
     expect(byName['Ravi Kumar'].isTop).toBe(true);
     expect(byName['Ravi Kumar'].rank).toBe(1);
     expect(byName['Pintu Kumar'].isTop).toBe(true);
-    expect(byName['Pintu Kumar'].rank).toBe(4);
-    expect(byName['Aarohi Bharti'].isTop).toBe(false);
-    expect(byName['Sunil Das'].isTop).toBe(false);
+    expect(byName['Pintu Kumar'].rank).toBe(3);
+    expect(byName['Aarohi Bharti'].isTop).toBe(true);
+    expect(byName['Aarohi Bharti'].rank).toBe(4);
+    expect(byName['Sunil Das'].isTop).toBe(true); // 600 is the fifth amount, though he is the eighth entry
+    expect(byName['Sunil Das'].rank).toBe(5);
+    expect(byName['Manish Kumar'].isTop).toBe(false);
   });
 });
 

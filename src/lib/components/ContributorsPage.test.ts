@@ -167,7 +167,7 @@ describe('English', () => {
   it('the Top-5 come first under High → Low, and each keeps the rank the amounts give them', () => {
     show('en');
     const top = cards().filter((c) => c.badge !== null);
-    // 1, 2, 3, 4, then the three-way tie for fifth place (a tie is not given 5, 6, 7).
+    // 1, 2, 3, 4, then the three-way tie on the fifth amount: all three are 5.
     expect(top.map((c) => [c.name, c.badge])).toEqual([
       ['Anil Mishra', 1], ['Farhan Ali', 2], ['Esha Verma', 3], ['Asha Devi', 4],
       ['Bimal Kumar', 5], ['Chandan Rai', 5], ['Deepak Singh', 5],
@@ -222,6 +222,110 @@ describe('English', () => {
     expect(cards().map((c) => c.badge)).toEqual([1, 3, 4, 5, null]);
     sortBy('amount_asc');
     expect(names()).toEqual(['Hari Om', 'Chandan Rai', 'Asha Devi', 'Esha Verma', 'Anil Mishra']);
+  });
+});
+
+// ------------------------------------------------------------------ ties and the Top 5
+//
+// "Top 5" is the five highest AMOUNTS. People on the same amount share a number, and the next
+// amount down is the very next number — nothing is skipped. (It used to count people instead, so
+// a tie for second left out the 3: 1, 2, 2, 4, 5.) More than five people can carry a badge.
+
+/** Givers of the given amounts (fake people), entered in the order given. */
+function givers(list: Array<[string, number]>): PortalData {
+  return parsePortalData({
+    users: list.map(([name], i) => user(`T${i}`, name, name, 'Shaharpura')),
+    collections: list.map(([, amount], i) => money(`T${i}`, amount)),
+  })!;
+}
+function showWith(data: PortalData, language: 'en' | 'hi' = 'en') {
+  lang.set(language);
+  portalState.set({ status: 'ready', data, stale: false, savedAt: Date.now(), version: 'v', failed: false, source: 'network' });
+  app = mount(Contributors, { target: host });
+  flushSync();
+}
+const badges = () => cards().map((c) => c.badge);
+const topLabels = () => host.querySelectorAll('[data-part="top"]').length;
+const badgeOf = () => Object.fromEntries(cards().map((c) => [c.name, c.badge]));
+
+// The committee's example: two people on the same amount in second place.
+const SECOND_PLACE_TIE = givers([
+  ['Gita Rai', 1000], ['Chitra Devi', 1151], ['Alka Rai', 1551], ['Esha Rai', 1100],
+  ['Bela Devi', 1151], ['Farida Rai', 1001], ['Dinesh Rai', 1111],
+]);
+
+describe('the Top 5 are the five highest amounts: ties share a number and no number is skipped', () => {
+  it('two on the same amount: 1, 2, 2, 3, 4, 5 — the 3 is not left out', () => {
+    showWith(SECOND_PLACE_TIE);
+    expect(cards().map((c) => [c.name, c.amount])).toEqual([
+      ['Alka Rai', 1551], ['Bela Devi', 1151], ['Chitra Devi', 1151], ['Dinesh Rai', 1111],
+      ['Esha Rai', 1100], ['Farida Rai', 1001], ['Gita Rai', 1000],
+    ]);
+    expect(badges()).toEqual([1, 2, 2, 3, 4, 5, null]);
+  });
+
+  it('so six people are in the Top 5 here, and every one of them says so', () => {
+    showWith(SECOND_PLACE_TIE);
+    expect(topLabels()).toBe(6);
+    expect(rowButtons().filter((b) => b.className.includes('border-gold'))).toHaveLength(6);
+    // the sixth amount is out, however close it is
+    expect(part(rowButtons()[6], 'rank')).toBeNull();
+    expect(part(rowButtons()[6], 'top')).toBeNull();
+  });
+
+  it('three on one amount: 2, 2, 2', () => {
+    showWith(givers([
+      ['Zed Rai', 700], ['Hira Lal', 800], ['Amar Rai', 800], ['Kiran Rai', 1000],
+      ['Bhim Rai', 800], ['Om Rai', 600], ['Pal Rai', 500], ['Raj Rai', 400],
+    ]));
+    expect(cards().map((c) => c.name)).toEqual(['Kiran Rai', 'Amar Rai', 'Bhim Rai', 'Hira Lal', 'Zed Rai', 'Om Rai', 'Pal Rai', 'Raj Rai']);
+    expect(badges()).toEqual([1, 2, 2, 2, 3, 4, 5, null]);
+    expect(topLabels()).toBe(7);
+  });
+
+  it('a tie at the top: the next amount is 2, not 5', () => {
+    showWith(givers([
+      ['A Rai', 500], ['B Rai', 500], ['C Rai', 500], ['D Rai', 500], ['E Rai', 400], ['F Rai', 300],
+      ['G Rai', 300], ['H Rai', 251], ['I Rai', 250], ['J Rai', 201],
+    ]));
+    expect(badges()).toEqual([1, 1, 1, 1, 2, 3, 3, 4, 5, null]);
+  });
+
+  it('a tie on the fifth amount takes all of them in', () => {
+    showWith(givers([['A Rai', 900], ['B Rai', 800], ['C Rai', 700], ['D Rai', 600], ['E Rai', 500], ['F Rai', 500], ['G Rai', 500], ['H Rai', 400]]));
+    expect(badges()).toEqual([1, 2, 3, 4, 5, 5, 5, null]);
+  });
+
+  it('fewer than five different amounts: everyone has a number and there is still no gap', () => {
+    showWith(givers([['A Rai', 300], ['B Rai', 300], ['C Rai', 200], ['D Rai', 100]]));
+    expect(badges()).toEqual([1, 1, 2, 3]);
+    expect(topLabels()).toBe(4);
+  });
+
+  it('a person has the same number whatever the sort and whatever the language', () => {
+    showWith(SECOND_PLACE_TIE);
+    const wanted = { 'Alka Rai': 1, 'Bela Devi': 2, 'Chitra Devi': 2, 'Dinesh Rai': 3, 'Esha Rai': 4, 'Farida Rai': 5, 'Gita Rai': null };
+    expect(badgeOf()).toEqual(wanted);
+    sortBy('amount_asc');
+    expect(badgeOf()).toEqual(wanted);
+    sortBy('name');
+    expect(badgeOf()).toEqual(wanted);
+    unmount(app!); app = null; host.innerHTML = '';
+    showWith(SECOND_PLACE_TIE, 'hi');
+    expect(badgeOf()).toEqual(wanted);
+  });
+
+  it('a search keeps the numbers of the whole list: filtering never renumbers anyone', () => {
+    vi.useFakeTimers();
+    showWith(SECOND_PLACE_TIE);
+    const input = host.querySelector('input[type="search"]') as HTMLInputElement;
+    input.value = 'rai'; // Alka, Dinesh, Esha, Farida, Gita — not the two Devis
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    flushSync();
+    vi.advanceTimersByTime(300);
+    flushSync();
+    expect(cards().map((c) => c.name)).toEqual(['Alka Rai', 'Dinesh Rai', 'Esha Rai', 'Farida Rai', 'Gita Rai']);
+    expect(badges()).toEqual([1, 3, 4, 5, null]); // 3 stays 3: the two on 2 are only hidden
   });
 });
 

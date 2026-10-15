@@ -17,13 +17,13 @@
  *   % Utilized      = Total Budget > 0 ? (Total Expense / Total Budget) * 100 : 0
  *   Still Available = Total Budget - Total Expense   (== Net Surplus)
  *
- * Contributor aggregation + competition ranking are new (no ranking existed
+ * Contributor aggregation + dense ranking (the Top 5 are the five highest amounts) are new (no ranking existed
  * before) but computed entirely from real collection amounts.
  */
 import { committeeGuarantorBanned } from '$lib/loanRules';
 import { parseAmt, safeUrl } from '$lib/utils/format';
 import { rowField } from './rowField';
-import { competitionRank, type Ranked } from '$lib/utils/ranking';
+import { denseRank, type Ranked } from '$lib/utils/ranking';
 import type {
   PortalData,
   CollectionRow,
@@ -288,7 +288,7 @@ export function contributorsForYear(
     }
   }
 
-  // Amount-descending (ties -> name) so competition ranking is computed correctly.
+  // Amount-descending, ties by name: a stable, readable order for anything that lists people by amount.
   return [...byKey.values()].sort((a, b) => {
     if (b.amount !== a.amount) return b.amount - a.amount;
     return a.name.localeCompare(b.name);
@@ -296,8 +296,9 @@ export function contributorsForYear(
 }
 
 /**
- * Contributors with competition ranking (1,1,3,4,4…; top-5 flagged), returned in
- * the requested DISPLAY order:
+ * Contributors ranked by amount level (1,1,2,3,3,4,5…: the Top 5 are the five highest AMOUNTS,
+ * so a tie shares a number, none is skipped, and more than five people can be flagged), returned
+ * in the requested DISPLAY order:
  *   EVERYONE — including the Top-5 — stays in ENTRY (SL No. / first-given) order.
  *   The Top-5 are NOT moved to the front; they simply carry the badge/crown/gold
  *   in place. Ranks/flags are still computed from the true amount order, so a
@@ -315,7 +316,7 @@ export function rankedContributors(
   // Only MONEY contributors are eligible for a rank / Top-5 badge. Material and
   // service givers appear in the list but carry no rank and are never Top-5.
   const moneyOnly = all.filter((c) => c.hasMoney);
-  const rankedMoney = competitionRank(moneyOnly, (c) => c.amount);
+  const rankedMoney = denseRank(moneyOnly, (c) => c.amount);
   const rankByKey = new Map(rankedMoney.map((r) => [r.item.key, r]));
 
   const combined: Ranked<Contributor>[] = all.map((item) => {
