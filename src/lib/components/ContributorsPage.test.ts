@@ -77,15 +77,18 @@ let host: HTMLDivElement;
 let app: ReturnType<typeof mount> | null = null;
 
 interface Card { name: string; amount: number | null; badge: number | null; times: string | null }
+// The rows of the list: one button per contributor, in a list.
+const rowButtons = () => [...host.querySelectorAll('ul > li > button')];
+const part = (row: Element, p: string) => row.querySelector(`[data-part="${p}"]`);
 const cards = (): Card[] =>
-  [...host.querySelectorAll('div.grid.grid-cols-3 > button')].map((b) => {
-    const amount = b.querySelector('.text-brand-700')?.textContent ?? null;
-    const badge = b.querySelector('[aria-label^="Rank"]')?.textContent ?? null;
+  rowButtons().map((b) => {
+    const amount = part(b, 'amount')?.textContent ?? null;
+    const badge = part(b, 'rank')?.textContent ?? null;
     return {
-      name: b.querySelector('span[title]')?.getAttribute('title') ?? '',
+      name: part(b, 'name')?.textContent?.trim() ?? '',
       amount: amount === null ? null : Number(amount.replace(/[^0-9]/g, '')),
       badge: badge === null ? null : Number(badge.trim()),
-      times: b.textContent?.match(/\d+\s*×|×\s*\d+/)?.[0] ?? null,
+      times: part(b, 'times')?.textContent?.trim() ?? null,
     };
   });
 const names = () => cards().map((c) => c.name);
@@ -219,6 +222,64 @@ describe('English', () => {
     expect(cards().map((c) => c.badge)).toEqual([1, 3, 4, 5, null]);
     sortBy('amount_asc');
     expect(names()).toEqual(['Hari Om', 'Chandan Rai', 'Asha Devi', 'Esha Verma', 'Anil Mishra']);
+  });
+});
+
+describe('the list is rows, not cards', () => {
+  it('is a real list: one item per contributor, each holding one button', () => {
+    show('en');
+    const list = host.querySelector('ul')!;
+    expect(list).toBeTruthy();
+    expect(list.querySelectorAll(':scope > li')).toHaveLength(10);
+    for (const li of list.querySelectorAll(':scope > li')) expect(li.querySelectorAll('button')).toHaveLength(1);
+    // and it is THE list of contributors: the first list on the page, ahead of the accounts text
+    expect(list.querySelector('button [data-part="name"]')).toBeTruthy();
+  });
+
+  it('is one column on a phone, two on a tablet, three on a wide screen — and no longer the grid of tiny cards', () => {
+    show('en');
+    const classes = host.querySelector('ul')!.className;
+    expect(classes).toContain('grid-cols-1');
+    expect(classes).toContain('md:grid-cols-2');
+    expect(classes).toContain('xl:grid-cols-3');
+    // the old grid was three across on a phone, up to six on a tablet: ~105px per name
+    expect(classes).not.toMatch(/(^|\s)grid-cols-3(\s|$)|xs:grid-cols|sm:grid-cols-5|md:grid-cols-6/);
+  });
+
+  it('each item is a flex box around its row, so in two or three columns the row fills the cell', () => {
+    // jsdom has no layout; the measured proof is in the PR (boxes sharing a grid row are the same
+    // height). Without `flex` the button keeps its content's height and the bottoms are ragged.
+    show('en');
+    // (the page has other lists — the years nav under "the accounts in words" — so only the
+    // items that hold a contributor's button are looked at)
+    const items = [...host.querySelectorAll('ul > li')].filter((li) => li.querySelector(':scope > button'));
+    expect(items).toHaveLength(10);
+    for (const li of items) expect(li.className).toMatch(/(^|\s)flex(\s|$)/);
+  });
+
+  it('keeps the page’s controls and the count above the list', () => {
+    show('en');
+    expect(host.querySelector('input[type="search"]')).toBeTruthy();
+    expect(host.querySelector('select')).toBeTruthy();
+    expect(host.textContent).toContain('10 contributions');
+  });
+
+  it('a row opens the person’s details when pressed', () => {
+    show('en');
+    (rowButtons()[0] as HTMLButtonElement).click();
+    flushSync();
+    // the detail card names the person it opened
+    expect(document.body.textContent).toContain('Anil Mishra');
+    expect(document.querySelector('[role="dialog"]')).toBeTruthy();
+  });
+
+  it('while loading, shows placeholder rows rather than an empty page', () => {
+    lang.set('en');
+    portalState.set({ status: 'loading', data: EMPTY_PORTAL_DATA, stale: false, savedAt: 0, version: '', failed: false, source: 'empty' });
+    app = mount(Contributors, { target: host });
+    flushSync();
+    expect(host.querySelectorAll('.skeleton').length).toBeGreaterThan(0);
+    expect(host.querySelector('ul')).toBeNull();
   });
 });
 

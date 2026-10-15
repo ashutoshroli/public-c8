@@ -67,7 +67,7 @@ describe('the service worker precache stays small', () => {
 
 describe('images and fonts do not cause layout shift or late text', () => {
   it('every avatar goes through <Avatar> (fallback under the photo, no raw <img>)', () => {
-    for (const f of ['ContributorCard', 'ContributorsListModal', 'ContributorDetail']) {
+    for (const f of ['ContributorCard', 'ContributorRow', 'ContributorsListModal', 'ContributorDetail']) {
       const src = read(`src/lib/components/${f}.svelte`);
       expect(src, `${f} must render <Avatar`).toContain('<Avatar');
       expect(src, `${f} must not render its own <img>`).not.toContain('<img');
