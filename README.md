@@ -80,6 +80,29 @@ HTML when the site is **built** from the data the API returns at that moment.
 Code: `src/lib/snapshot/` (facts → sentences, build-time fetch, Vite plugin) and
 `src/lib/components/AccountsText.svelte`.
 
+### Which years are "final" (the 10 Years page)
+A year is **final when the committee has locked it** on the management portal's *Lock Data* page
+(a locked year takes no more add/edit/delete). The public Worker publishes the locked years as
+`lockedYears: [2017, …]` in `portalData`, and `/decade` follows it:
+
+- a **locked** year has no "not final yet" note and no • marker, whichever year it is (the current
+  one too);
+- **every other year** has both. The current year keeps its own sentence ("Chhath 2026 is not yet
+  complete…"); an earlier year gets one that says what is missing — the committee locking its
+  records. The heading is shared. Both sentences are editable in mgmt → Journey Content
+  (`current_note_p`; the earlier-year sentence is `open_note_p`, which has no field there yet — until
+  one is added the built-in text is used);
+- `lockedYears` **absent** from the data means *not told* (an older Worker, a copy saved earlier), which
+  is **not** "nothing is locked": the page then does what it did before — only the current calendar
+  year is marked. `[]` means nothing is locked, and every year is marked;
+- the same rule decides the **build-time** facts, so the notes are in the HTML a crawler reads, the
+  "accounts in words" tags those years' lines "(not final yet)", and the page does not flicker when
+  the live data lands. Locking or unlocking a year reaches the live page when the data next refreshes,
+  and the static HTML (and `llms-full.txt`) at the next **Redeploy**.
+
+Code: `lockedYearSet` / `isYearFinal` in `src/lib/api/derive.ts` (one rule, used by the page and the
+snapshot alike) and `src/routes/decade/+page.svelte`.
+
 ## Two languages, one page per year
 **The language is in the address.** `/hi/…` is Hindi, everything else is English. Before this, the
 language was a setting kept in the browser, so one address served two languages and a search engine

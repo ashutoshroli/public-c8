@@ -353,6 +353,40 @@ export function computeSummary(
   return { contributors, totalCollected, average, recordedPct };
 }
 
+// ---- Which years are final ----
+
+/**
+ * The years the committee has LOCKED in the management portal, or null when the payload does not
+ * say. A locked year takes no more add/edit/delete, so its records are final.
+ *
+ * The two answers must not be merged:
+ *   - an array — even an empty one — means the backend told us. These are the locked years.
+ *   - null means it did not: an older Worker, a copy saved before the field existed, the empty
+ *     payload before the first load. Reading that as "nothing is locked" would mark every year
+ *     "not final" for anyone holding an old copy, so callers fall back to the calendar (see
+ *     isYearFinal).
+ */
+export function lockedYearSet(data: PortalData): Set<number> | null {
+  const raw = data.lockedYears;
+  if (!Array.isArray(raw)) return null;
+  const out = new Set<number>();
+  for (const v of raw) {
+    const y = typeof v === 'number' ? v : Number(String(v).trim());
+    if (Number.isInteger(y) && y > 0) out.add(y);
+  }
+  return out;
+}
+
+/**
+ * Are this year's records final?
+ *  - when the backend says which years are locked: exactly the locked ones, whatever the calendar;
+ *  - when it does not: every year but the current calendar year, which is what the page assumed
+ *    before the lock was public.
+ */
+export function isYearFinal(year: number, currentYear: number, locked: ReadonlySet<number> | null): boolean {
+  return locked ? locked.has(year) : year !== currentYear;
+}
+
 // ---- Decade / "Our Journey" (live figures) ----
 
 /** The founding year of the samiti's records. Fixed; the range end is live. */
@@ -364,8 +398,14 @@ export interface DecadeYearStat {
   total: number;
   /** Live recorded contributor entries for the year (resold excluded). */
   contributors: number;
-  /** True when this is the current calendar year (records not final yet). */
+  /** True when this is the current calendar year. */
   isCurrent: boolean;
+  /**
+   * True when the year's records are final: locked by the committee, or — when the payload does
+   * not say which years are locked — any year but the current one. A year that is not final
+   * carries the "not final yet" note and the • marker.
+   */
+  final: boolean;
 }
 
 export interface DecadeStats {
@@ -399,13 +439,20 @@ export function decadeStats(data: PortalData): DecadeStats {
   const dataMax = present.length ? Math.max(...present) : currentYear;
   const endYear = Math.max(DECADE_START_YEAR, dataMax, currentYear);
   const userMap = buildUserMap(data);
+  const locked = lockedYearSet(data);
 
   const years: DecadeYearStat[] = [];
   let grandTotal = 0;
   let grandContributors = 0;
   for (let y = DECADE_START_YEAR; y <= endYear; y++) {
     const s = computeSummary(data, y, userMap);
-    years.push({ year: y, total: s.totalCollected, contributors: s.contributors, isCurrent: y === currentYear });
+    years.push({
+      year: y,
+      total: s.totalCollected,
+      contributors: s.contributors,
+      isCurrent: y === currentYear,
+      final: isYearFinal(y, currentYear, locked)
+    });
     grandTotal += s.totalCollected;
     grandContributors += s.contributors;
   }

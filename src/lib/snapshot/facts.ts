@@ -28,8 +28,10 @@ import {
   expenseItems,
   journeyEntries,
   isRepaidLoan,
+  isYearFinal,
   loanTotalWithInterest,
   loansForYear,
+  lockedYearSet,
   type YearSel,
 } from '$lib/api/derive';
 import { parseAmt } from '$lib/utils/format';
@@ -50,6 +52,13 @@ export interface DecadeRow {
   total: number;
   contributors: number;
   isCurrent: boolean;
+  /**
+   * true when the year's records are final: locked by the committee, or — when the data does not
+   * say which years are locked — any year but the current one (derive.ts: isYearFinal). The
+   * decade page reads it from the build-time facts to draw the "not final yet" notes before the
+   * live data has arrived.
+   */
+  final: boolean;
   /** false for a year with no contribution recorded at all */
   hasRecords: boolean;
 }
@@ -213,6 +222,7 @@ export function decadeFacts(data: PortalData, now: Date): DecadeFacts {
   const currentYear = istYear(now);
   const endYear = Math.max(DECADE_START_YEAR, dataMax, currentYear);
   const userMap = buildUserMap(data);
+  const locked = lockedYearSet(data);
 
   const years: DecadeRow[] = [];
   let grandTotal = 0;
@@ -224,6 +234,7 @@ export function decadeFacts(data: PortalData, now: Date): DecadeFacts {
       total: s.totalCollected,
       contributors: s.contributors,
       isCurrent: y === currentYear,
+      final: isYearFinal(y, currentYear, locked),
       hasRecords: collectionsForYear(data, y).length > 0,
     });
     grandTotal += s.totalCollected;
