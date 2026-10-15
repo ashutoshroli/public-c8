@@ -88,6 +88,25 @@ function render(props: { onselect?: (key: string) => void; oncountclick?: () => 
 const byLabel = (labelPart: RegExp) =>
   [...host.querySelectorAll('button')].find((b) => labelPart.test(b.getAttribute('aria-label') ?? ''));
 
+describe('the numbers on the home rail', () => {
+  it('are the five highest AMOUNTS, as on the contributors page: a tie shares a number and none is skipped', () => {
+    // Entered in this order, so the rail shows them in this order. Two people gave ₹1,151.
+    const amounts = [1000, 1551, 1151, 1111, 1100, 1151, 1001];
+    const data = parsePortalData({
+      users: amounts.map((_, i) => ({ ID: `T${i}`, Name: `Giver ${i}` })),
+      collections: amounts.map((a, i) => ({ Year: 2026, ID: `T${i}`, Amount: String(a), 'Contribution Type': '1' })),
+    })!;
+    portalState.set({ status: 'ready', data, stale: false, savedAt: Date.now(), version: 't', failed: false, source: 'network' });
+    render();
+    // the rail repeats its list to loop; the repeat is `inert` and `aria-hidden` (the first copy is the real one)
+    const real = [...host.querySelectorAll('[role="listitem"]')].filter((li) => li.getAttribute('aria-hidden') !== 'true');
+    expect(real).toHaveLength(7);
+    const badge = (li: Element) => li.querySelector('[aria-label^="Rank"]')?.textContent?.trim() ?? null;
+    expect(real.map(badge)).toEqual([null, '1', '2', '3', '4', '2', '5']);
+    expect(real.filter((li) => li.textContent?.includes('Top 5'))).toHaveLength(6);
+  });
+});
+
 describe('LiveScroll controls (shared across skins)', () => {
   it('renders the prev / pause / next controls', () => {
     render();

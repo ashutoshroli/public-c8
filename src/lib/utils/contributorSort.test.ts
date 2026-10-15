@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { sortContributors, shownName, type ContributorSortKey } from './contributorSort';
-import { competitionRank, type Ranked } from './ranking';
+import { denseRank, type Ranked } from './ranking';
 import type { Contributor } from '$lib/api/derive';
 
 // One contributor, with only the fields a sort can see filled in on purpose.
@@ -31,7 +31,7 @@ function person(over: Partial<Contributor> & { name: string }): Contributor {
 // from the amounts (and never recomputed by a sort).
 function ledger(people: Contributor[]): Ranked<Contributor>[] {
   const moneyOnly = people.filter((p) => p.hasMoney).sort((a, b) => b.amount - a.amount);
-  const ranked = new Map(competitionRank(moneyOnly, (p) => p.amount).map((r) => [r.item.key, r]));
+  const ranked = new Map(denseRank(moneyOnly, (p) => p.amount).map((r) => [r.item.key, r]));
   return people.map((p) => ranked.get(p.key) ?? { item: p, rank: 0, isTop: false });
 }
 
@@ -90,17 +90,18 @@ describe('sortContributors', () => {
     expect(out).toHaveLength(input.length);
     for (const entry of out) expect(input).toContain(entry); // same object, not a copy
     expect(out.filter((e) => e.isTop).map((e) => [e.item.name, e.rank])).toEqual([
-      ['Zoya', 1], ['Ravi', 2], ['Anu', 3], ['Dev', 3], ['Sita', 5],
+      ['Zoya', 1], ['Ravi', 2], ['Anu', 3], ['Dev', 3], ['Sita', 4], ['Mira', 5],
     ]);
   });
 
   it('the Top-5 are the first ones listed under High → Low and the last ones under Low → High', () => {
+    // five amounts are in the Top 5 — 1251, 501, 351, 301, 151 — and two people share 351: six people
     const desc = sortContributors(people(), 'amount_desc', 'en');
-    expect(desc.slice(0, 5).every((e) => e.isTop)).toBe(true);
-    expect(desc.slice(5).every((e) => !e.isTop)).toBe(true);
+    expect(desc.slice(0, 6).every((e) => e.isTop)).toBe(true);
+    expect(desc.slice(6).every((e) => !e.isTop)).toBe(true);
     const asc = sortContributors(people(), 'amount_asc', 'en');
-    expect(asc.slice(0, 2).every((e) => !e.isTop)).toBe(true);
-    expect(asc.slice(2).every((e) => e.isTop)).toBe(true);
+    expect(asc.slice(0, 1).every((e) => !e.isTop)).toBe(true);
+    expect(asc.slice(1).every((e) => e.isTop)).toBe(true);
   });
 
   it('gives the same answer however the input happens to be shuffled', () => {
