@@ -117,6 +117,15 @@ describe('the build’s data cannot reach a browser as JavaScript', () => {
     expect(comp, 'the section must read the carrier before the template can remove it').toMatch(/const pre = untrack\(\(\) => prerenderedFacts\(page\)\);/);
   });
 
+  it('the decade page takes which years are final from the same block, read at the start', () => {
+    const page = read('routes/decade/+page.svelte');
+    expect(page, 'the block is removed from <head> while Svelte hydrates, so a later read finds nothing')
+      .toMatch(/const pre = untrack\(\(\) => prerenderedFacts\('decade'\)\);/);
+    // …and uses it only until the live data is here.
+    expect(page).toMatch(/let live = \$derived\(\$portalState\.status === 'ready' && !\$portalState\.failed\);/);
+    expect(page).toMatch(/live \? row\.final : \(builtFinal\.get\(row\.year\) \?\? row\.final\)/);
+  });
+
   it('the Vite config documents why a failed fetch stops the build', () => {
     expect(read('../vite.config.ts')).toMatch(/failed fetch fails the build on purpose/);
   });

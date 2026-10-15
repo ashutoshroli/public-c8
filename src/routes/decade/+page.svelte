@@ -1,15 +1,32 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import { Info } from '@lucide/svelte';
   import PageHeading from '$lib/components/PageHeading.svelte';
   import AccountsText from '$lib/components/AccountsText.svelte';
   import { tr, lang } from '$lib/stores/lang';
   import { portalState } from '$lib/stores/portal';
   import { decadeStats, journeyEntries, journeyTagline, journeyText, interp } from '$lib/api/derive';
+  import type { DecadeYearStat } from '$lib/api/derive';
+  import { prerenderedFacts } from '$lib/snapshot/runtime';
   import { fmt } from '$lib/utils/format';
   import { DECADE_MILESTONES } from '$lib/utils/decadeData';
 
   // Live decade figures (no hardcoded numbers).
   let d = $derived(decadeStats($portalState.data));
+
+  // Which years are FINAL (locked by the committee) decides which years carry the "not final yet"
+  // note and the • marker. Until the live data arrives the cards are drawn from nothing, but this
+  // one thing can still be right — from the facts the build wrote, the very ones the "accounts in
+  // words" below is made of — so the note is in the HTML a search engine reads, and a visitor does
+  // not watch it appear or vanish when the data lands. Once the data is here, it is the data's.
+  // Read ONCE, before the template runs: in the browser the facts are in a block in <head> that
+  // Svelte removes while it hydrates (the AccountsText below does the same).
+  const pre = untrack(() => prerenderedFacts('decade'));
+  const builtFinal = new Map<number, boolean>(
+    pre && pre.facts.kind === 'decade' ? pre.facts.years.map((r) => [r.year, r.final] as [number, boolean]) : []
+  );
+  let live = $derived($portalState.status === 'ready' && !$portalState.failed);
+  const isFinal = (row: DecadeYearStat): boolean => (live ? row.final : (builtFinal.get(row.year) ?? row.final));
   // DB-managed page text (mgmt "Journey Content" tab). Each block falls back to
   // its built-in i18n string when the DB has nothing for that field.
   let jt = $derived(journeyText($portalState.data, $lang));
@@ -76,19 +93,28 @@
           <div class="surface p-4">
             <div class="flex items-baseline justify-between gap-3">
               <h3 class="text-sm font-extrabold">{entry?.title || row.year}</h3>
-              <span class="text-xs font-bold text-muted">{row.year}{#if row.isCurrent} •{/if}</span>
+              <span class="text-xs font-bold text-muted">{row.year}{#if !isFinal(row)} •{/if}</span>
             </div>
             {#if entry?.content}<p class="mt-1 text-sm leading-relaxed text-muted">{entry.content}</p>{/if}
             <div class="mt-3 flex flex-wrap gap-2 text-xs font-bold">
               <span class="rounded-md bg-brand-50 px-2.5 py-1 text-brand-700">{T('total_label', 'decade_total_label')}: {fmt(row.total)}</span>
               <span class="rounded-md bg-canvas px-2.5 py-1">{T('contributors_label', 'decade_contributors_label')}: {row.contributors}</span>
             </div>
-            {#if row.isCurrent}
+            {#if !isFinal(row)}
+              <!-- Same heading for every year that is not final. The sentence under it differs:
+                   Chhath of the current year really is not over; an earlier year's festival is,
+                   and what is missing is the committee locking its records. -->
               <div class="mt-3 flex items-start gap-2 rounded-lg bg-warning/10 p-3 text-xs text-warning">
                 <Info class="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                 <div>
                   <p class="font-bold">{T('current_note_h', 'decade_current_note_h', { year: row.year })}</p>
-                  <p class="mt-0.5">{T('current_note_p', 'decade_current_note_p', { year: row.year })}</p>
+                  <p class="mt-0.5">
+                    {#if row.isCurrent}
+                      {T('current_note_p', 'decade_current_note_p', { year: row.year })}
+                    {:else}
+                      {T('open_note_p', 'decade_open_note_p', { year: row.year })}
+                    {/if}
+                  </p>
                 </div>
               </div>
             {/if}
@@ -116,7 +142,7 @@
       </div>
       {#each d.years as r (r.year)}
         <div role="row" class="grid grid-cols-[1fr_1.4fr_1fr] gap-2 border-b border-line py-2.5 text-sm last:border-0">
-          <span role="cell" class="font-bold">{r.year}{#if r.isCurrent} •{/if}</span>
+          <span role="cell" class="font-bold">{r.year}{#if !isFinal(r)} •{/if}</span>
           <span role="cell" class="font-semibold text-brand-700">{fmt(r.total)}</span>
           <span role="cell">{r.contributors}</span>
         </div>

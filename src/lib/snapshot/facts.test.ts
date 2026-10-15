@@ -9,10 +9,10 @@
 //  2. It says something DIFFERENT from the live page. Snapshot and live text are built by the same
 //     functions from the same data, so they can only differ in freshness; a test holds that.
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { parsePortalData, type PortalData } from '$lib/api/schema';
 import { T } from '$lib/i18n';
-import { computeFinancials } from '$lib/api/derive';
+import { computeFinancials, decadeStats } from '$lib/api/derive';
 import {
   PAGE_KEYS, MIN_VILLAGE_CONTRIBUTORS, defaultYear, decadeFacts, expensesFacts, loansFacts,
   committeeFacts, contributorsFacts, homeFacts, factsForPage, yearPack, yearsWithRecords,
@@ -878,5 +878,103 @@ describe('organisations the committee has approved by name', () => {
     const strict = buildNameGuard(data.users, []);
     expect(strict.mentionsFullNameOrContact(story2017.content_en)).toBe(true);
     expect(buildNameGuard(data.users).mentionsFullNameOrContact(story2017.content_en)).toBe(false);
+  });
+});
+
+// -------------------------------------------------------- which years are final (the lock)
+
+describe('the decade facts and words follow the committee’s lock', () => {
+  // The fixture has money in 2024 (₹1,200 from 2) and 2025 (₹12,050 from 15); 2026 is open, empty.
+  const lockedAs = (lockedYears?: unknown): PortalData =>
+    parsePortalData(lockedYears === undefined ? DATA : { ...DATA, lockedYears })!;
+  const lines = (data: PortalData, lang: 'en' | 'hi' = 'en') => {
+    const list = accountsText(decadeFacts(data, NOW), lang, { kind: 'live' }).blocks.find((b) => b.kind === 'list');
+    return list && list.kind === 'list' ? list.items : [];
+  };
+  const finalOf = (data: PortalData) => Object.fromEntries(decadeFacts(data, NOW).years.map((r) => [r.year, r.final]));
+  // The page computes its marks with decadeStats, which reads the clock itself: pin it to NOW.
+  const decadeStatsAt = (data: PortalData) => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(NOW);
+    try { return decadeStats(data).years; } finally { vi.useRealTimers(); }
+  };
+
+  it('with no locked years in the data, the words are exactly what they were before the lock was public', () => {
+    expect(lines(lockedAs())).toEqual([
+      '2017: no records entered', '2018: no records entered', '2019: no records entered',
+      '2020: no records entered', '2021: no records entered', '2022: no records entered',
+      '2023: no records entered',
+      '2024: ₹1,200 from 2 contributors',
+      '2025: ₹12,050 from 15 contributors',
+      '2026: collection in progress, no records yet',
+    ]);
+    expect(finalOf(lockedAs())).toEqual({
+      2017: true, 2018: true, 2019: true, 2020: true, 2021: true, 2022: true, 2023: true, 2024: true, 2025: true, 2026: false,
+    });
+  });
+
+  it('a year with figures that is not final says so; a locked one does not', () => {
+    expect(lines(lockedAs([2024]))).toEqual([
+      '2017: no records entered', '2018: no records entered', '2019: no records entered',
+      '2020: no records entered', '2021: no records entered', '2022: no records entered',
+      '2023: no records entered',
+      '2024: ₹1,200 from 2 contributors',
+      '2025: ₹12,050 from 15 contributors (not final yet)',
+      '2026: collection in progress, no records yet',
+    ]);
+  });
+
+  it('only "collection in progress" is kept for the open current year — a year with no records is not "not final"', () => {
+    const text = lines(lockedAs([])).join('\n');
+    expect(text.match(/no records entered/g)).toHaveLength(7); // 2017–2023
+    expect(text.match(/collection in progress/g)).toHaveLength(1); // 2026
+    expect(text.match(/not final yet/g)).toHaveLength(2); // 2024 and 2025: they have figures
+  });
+
+  it('a locked current year with nothing on record is just a year with no records, not "in progress"', () => {
+    const l = lines(lockedAs([2026]));
+    expect(l.at(-1)).toBe('2026: no records entered');
+    expect(l.join('\n')).not.toContain('collection in progress');
+  });
+
+  it('every year locked: no line is marked', () => {
+    const all = lockedAs([2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026]);
+    expect(lines(all).join('\n')).not.toContain('not final');
+    expect(lines(all).join('\n')).not.toContain('collection in progress');
+  });
+
+  it('in Hindi', () => {
+    const l = lines(lockedAs([2024]), 'hi');
+    expect(l.at(-3)).toBe('2024: 2 योगदानकर्ता से ₹1,200');
+    expect(l.at(-2)).toBe('2025: 15 योगदानकर्ता से ₹12,050 (अभी final नहीं)');
+    expect(l.at(-1)).toBe('2026: संग्रह जारी है, अभी कोई रिकॉर्ड नहीं');
+  });
+
+  it('the facts carry a boolean per year, and the lock moves no figure', () => {
+    const plain = decadeFacts(lockedAs(), NOW);
+    const locked = decadeFacts(lockedAs([2017, 2024]), NOW);
+    expect(locked.years.every((r) => typeof r.final === 'boolean')).toBe(true);
+    expect(locked.years.map(({ final: _f, ...rest }) => rest)).toEqual(plain.years.map(({ final: _f, ...rest }) => rest));
+    expect([locked.grandTotal, locked.grandContributors]).toEqual([plain.grandTotal, plain.grandContributors]);
+    expect(finalOf(lockedAs([2017, 2024]))).toMatchObject({ 2017: true, 2024: true, 2025: false, 2026: false });
+  });
+
+  it('what the snapshot says and what the live page says are the same list, so they cannot disagree', () => {
+    const data = lockedAs([2017, 2024]);
+    // The page draws its marks from decadeStats; the snapshot from decadeFacts. Same data, same day.
+    const page = Object.fromEntries(decadeStatsAt(data).map((y) => [y.year, y.final]));
+    expect(finalOf(data)).toEqual(page);
+  });
+
+  it('is still free of every name, number and ID in the data (the lock list is only years)', () => {
+    const data = lockedAs([2017, 2024]);
+    const json = JSON.stringify(decadeFacts(data, NOW));
+    for (const p of PEOPLE) {
+      for (const secret of [p.name, p.nameHi, p.father, p.mobile, p.id, p.photo]) expect(json).not.toContain(secret);
+    }
+    for (const lang of ['en', 'hi'] as const) {
+      const text = lines(data, lang).join('\n');
+      for (const p of PEOPLE) expect(text).not.toContain(p.name);
+    }
   });
 });

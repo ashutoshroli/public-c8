@@ -165,6 +165,12 @@ export const portalDataSchema = z
     // The "Donate Now" page fields. Optional — an older backend omits it and the
     // page simply shows no donation details.
     donation: donationSchema.optional(),
+    // The years the committee has LOCKED in the management portal. A locked year takes no more
+    // add/edit/delete, so its records are final. Optional on purpose, and a value of the wrong
+    // shape reads as ABSENT instead of failing the payload: absent means "not told" (an older
+    // backend, a saved copy from before the field existed), which is NOT the same as an empty list
+    // ("nothing is locked") — see lockedYearSet in derive.ts.
+    lockedYears: z.array(z.union([z.number(), z.string()])).optional().catch(undefined),
     // Backend may flag a degraded (last-known-good) response.
     stale: z.boolean().optional(),
     staleReason: z.string().optional()

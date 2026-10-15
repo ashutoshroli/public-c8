@@ -185,9 +185,16 @@ function contributorsBlocks(f: ContributorsFacts, lang: Lang, namesNote: boolean
 function decadeBlocks(f: DecadeFacts, lang: Lang): Block[] {
   const items = f.years.map((r) => {
     if (r.contributors === 0 && !r.hasRecords) {
-      return t(lang, r.isCurrent ? 'acc_dec_open' : 'acc_dec_norecords', { year: r.year });
+      // "Collection in progress" is only true of a year that is both the current one and not yet
+      // final; a locked year with nothing on record has simply no records.
+      return t(lang, r.isCurrent && !r.final ? 'acc_dec_open' : 'acc_dec_norecords', { year: r.year });
     }
-    return t(lang, 'acc_dec_year', { year: r.year, total: fmt(r.total), contributors: noun(lang, 'acc_n_contributors', r.contributors) });
+    // The same note the page draws under the year, in words: figures that are not final say so.
+    return t(lang, r.final ? 'acc_dec_year' : 'acc_dec_year_open', {
+      year: r.year,
+      total: fmt(r.total),
+      contributors: noun(lang, 'acc_n_contributors', r.contributors),
+    });
   });
   return [
     list(items, t(lang, 'acc_dec_h', { start: f.startYear, end: f.endYear })),
