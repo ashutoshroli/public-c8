@@ -302,6 +302,9 @@ export function contributorsForYear(
  *   The Top-5 are NOT moved to the front; they simply carry the badge/crown/gold
  *   in place. Ranks/flags are still computed from the true amount order, so a
  *   person's rank (and whether they're Top-5) never changes with position.
+ *
+ * NOT amount order. A page that offers a sort (the Contributors page) must sort this list
+ * itself — see `sortContributors` in $lib/utils/contributorSort.
  */
 export function rankedContributors(
   data: PortalData,

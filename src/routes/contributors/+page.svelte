@@ -9,14 +9,13 @@
   import { portalState, year } from '$lib/stores/portal';
   import { tr, lang } from '$lib/stores/lang';
   import { rankedContributors } from '$lib/api/derive';
+  import { sortContributors, type ContributorSortKey } from '$lib/utils/contributorSort';
   import type { Ranked } from '$lib/utils/ranking';
   import type { Contributor } from '$lib/api/derive';
 
-  type SortKey = 'amount_desc' | 'amount_asc' | 'name';
-
   let query = $state('');
   let debounced = $state('');
-  let sortKey = $state<SortKey>('amount_desc');
+  let sortKey = $state<ContributorSortKey>('amount_desc');
   let selected = $state<Ranked<Contributor> | null>(null);
 
   let timer: ReturnType<typeof setTimeout>;
@@ -43,11 +42,9 @@
           r.item.village.toLowerCase().includes(q)
       );
     }
-    const sorted = [...list];
-    if (sortKey === 'amount_asc') sorted.sort((a, b) => a.item.amount - b.item.amount);
-    else if (sortKey === 'name')
-      sorted.sort((a, b) => a.item.name.localeCompare(b.item.name, $lang === 'hi' ? 'hi' : 'en'));
-    return sorted;
+    // Every option — High → Low included — is an explicit sort; `allRanked` itself is in ledger
+    // order (see rankedContributors), which is not any of the three.
+    return sortContributors(list, sortKey, $lang === 'hi' ? 'hi' : 'en');
   });
 </script>
 
